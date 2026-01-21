@@ -1,0 +1,241 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  background: #f2f2f2;
+  color: #111;
+}
+
+.container {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* ===== HEADER ===== */
+.header {
+  background: #fff;
+  padding: 26px 16px 18px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+
+.header-text h1 {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+
+
+.header-text p {
+  margin-top: 6px;
+  font-size: 16px;
+  color: #555;
+}
+
+/* ===== CARD ===== */
+.payment-box,
+.total-box {
+  background: #fff;
+  border-radius: 22px;
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  margin-bottom: 24px
+}
+
+/* ===== FIELD (РЎРўР РћР“Рћ Р’ РЎРўР РћРљРЈ) ===== */
+.field {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.field:last-child {
+  border-bottom: none;
+}
+
+/* Р›Р•Р’РђРЇ Р§РђРЎРўР¬ */
+.field .label {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 500;
+  color: #111;
+}
+
+/* РџР РђР’РђРЇ Р§РђРЎРўР¬ */
+.field .value {
+  flex-grow: 1;
+  text-align: right;
+  font-size: 16px;
+  color: #666;
+  word-break: break-word;
+}
+
+/* IBAN */
+.field.iban .value {
+  font-family: "Courier New", monospace;
+  font-size: 15px;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== TOTAL ===== */
+.field.total {
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.field.total .value {
+  font-size: 26px;
+  color: #000;
+}
+
+/* ===== PAY BUTTON ===== */
+.pay-button {
+  margin: 22px 0;
+}
+
+.pay-btn {
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  width: 100%;
+  height: 64px;
+  line-height: 64px;
+  border-radius: 20px;
+  border: none;
+  background: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+}
+
+/* ===== BANK BUTTONS ===== */
+.bank-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bank-btn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 64px;
+  padding: 0 18px;
+  border-radius: 20px;
+  border: none;
+  background: #fff;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+}
+
+.bank-btn img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+/* ===== FOOTER ===== */
+.footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 14px;
+  color: #777;
+}
+
+
+.field.popult{
+  display: block;
+}
+
+.value.left{
+  margin-top: 3px;
+  text-align: left;
+}
+
+.field.iban .value {
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    letter-spacing: 0.4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: bold;
+}
+/* ===== QR ===== */
+.qr-box {
+  display: none;
+  background: #fff;
+  border-radius: 22px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.qr-box img {
+  width: 220px;
+  max-width: 100%;
+}
+
+.qr-box p {
+  margin-top: 12px;
+  font-size: 15px;
+  color: #555;
+}
+
+/* ===== DESKTOP ===== */
+.is-desktop .bank-buttons {
+  display: none;
+}
+
+.is-desktop .qr-box {
+  display: block;
+}
+
+/* ===== MOBILE ===== */
+.is-mobile .qr-box {
+  display: none;
+}
+
+.qr-box {
+  display: none;
+  background: #fff;
+  border-radius: 22px;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.qr-box img {
+  width: 220px;
+}
+
+.is-desktop .bank-buttons {
+  display: none;
+}
+
+.is-desktop .qr-box {
+  display: block;
+}
+
+.is-mobile .qr-box {
+  display: none;
+}

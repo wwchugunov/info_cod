@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оплата онлайн</title>
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+
+<body>
+
+    <header class="header">
+        <div class="container header-container">
+            <div class="header-text">
+                <h1 class="frame__title">
+                    <%= company.name %>
+                </h1>
+                <p>Безпечно та швидко</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+
+            <div class="total-box">
+                <div class="field">
+                    <span class="label">Сума:</span>
+                    <span class="value">
+                        <%= originalAmount %> грн
+                    </span>
+                </div>
+                <div class="field">
+                    <span class="label">Комісія:</span>
+                    <span class="value">
+                        <%= commissionPercent + commissionFixed %> грн
+                    </span>
+                </div>
+                <div class="field total">
+                    <span>Разом:</span>
+                    <span>
+                        <%= finalAmount %> грн
+                    </span>
+                </div>
+            </div>
+
+            <div class="payment-box">
+                <div class="field popult">
+                    <div class="label">Призначення:</div>
+                    <div class="value left">
+                        <%= purpose %>
+                    </div>
+                </div>
+                <div class="field iban">
+                    <span class="label">IBAN:</span>
+                    <span class="value">
+                        <%= company.iban %>
+                    </span>
+                </div>
+                <div class="field">
+                    <span class="label">ЄДРПОУ:</span>
+                    <span class="value">
+                        <%= company.edrpo %>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Кнопка оплаты -->
+            <div class="pay-button">
+                <a href="<%= paymentUrl %>" class="pay-btn" id="pay-btn" data-nbu-url="<%= paymentUrl %>">Оплатити</a>
+            </div>
+
+            <!-- Кнопки банков -->
+            <div class="bank-buttons" id="bankButtons">
+                <button class="bank-btn" data-bank="mono"><img src="/img/monobank-logo.png" alt="" width="50"> Сплатили
+                    Mono</button>
+                <button class="bank-btn" data-bank="privat24"><img src="/img/Privat24_Logo.png" alt="" width="50">
+                    Сплатили Privat</button>
+                <button class="bank-btn" data-bank="abank"><img src="/img/a-bank.png" alt="" width="50"> Сплатили
+                    a-bank</button>
+            </div>
+
+            <!-- QR-код -->
+            <div class="qr-box" id="qrBox">
+                <img src="" alt="QR оплати">
+                <p>Відскануйте QR-код для оплати</p>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>© 2026 Всі права захищено</p>
+        </div>
+    </footer>
+
+    <script src="/js/main.js" defer></script>
+
+</body>
+
+</html>
