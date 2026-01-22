@@ -35,11 +35,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!isMobile && qrBox && nbuUrl) {
     qrBox.style.display = "block";
     const qrImg = qrBox.querySelector("img");
-    if (qrImg) {
-      qrImg.src =
-        "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=" +
-        encodeURIComponent(nbuUrl);
-    }
+const currentPageUrl = window.location.href;
+
+if (qrImg) {
+  qrImg.src =
+    "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" +
+    encodeURIComponent(currentPageUrl);
+}
+
   }
 
   const banks = {
@@ -113,14 +116,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const ua = navigator.userAgent.toLowerCase();
   const isMobile = /android|iphone|ipad|ipod/.test(ua);
 
-  if (isMobile) {
-    // 📱 ТЕЛЕФОН
-    bankButtons.style.display = "block";
-    qrBox.style.display = "none";
-  } else {
-    // 🖥 ПК
-    bankButtons.style.display = "none";
-    qrBox.style.display = "block";
+if (isMobile) {
+  // 📱 ТЕЛЕФОН
+  bankButtons.style.display = "block";
+  qrBox.style.display = "none";
+  payBtn.style.display = "block";
+} else {
+  // 🖥 ПК
+  bankButtons.style.display = "none";
+  qrBox.style.display = "block";
+  payBtn.style.display = "none";
+
 
     const qrImg = qrBox.querySelector("img");
     const nbuUrl = payBtn.dataset.nbuUrl;
