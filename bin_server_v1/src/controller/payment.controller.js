@@ -6,7 +6,7 @@ const paymentController = {};
 
 paymentController.generatePayment = async (req, res) => {
   try {
-    const { amount, purpose, iban } = req.body;
+    const { amount, purpose } = req.body;
     const company = req.company;
 
     if (!amount || !purpose) {
@@ -18,8 +18,7 @@ paymentController.generatePayment = async (req, res) => {
     const paymentInfo = await paymentService.createPayment(
       company,
       Number(amount),
-      purpose,
-      iban
+      purpose
     );
 
     res.status(201).json({
@@ -52,12 +51,13 @@ paymentController.getPaymentByLink = async (req, res) => {
 
     const paymentInfo = await paymentService.createPayment(
       payment.Company,
-      Number(payment.amount), 
+      Number(payment.amount),
       payment.purpose,
       payment.Company.iban
     );
 
-    const paymentUrl = `https://bank.gov.ua/qr/${paymentInfo.qrlink}`;
+    const paymentCode = paymentInfo.qrlink;
+    const paymentUrl = `https://bank.gov.ua/qr/${paymentCode}`;
 
     res.render("payment", {
       linkId: payment.link_id,
@@ -72,6 +72,7 @@ paymentController.getPaymentByLink = async (req, res) => {
       qrlink: paymentInfo.qrlink,
       nbu_link: paymentInfo.qr_link,
       paymentUrl,
+      paymentCode,
       company: {
         name: payment.Company.name,
         logo_url: payment.Company.logo_url || null,

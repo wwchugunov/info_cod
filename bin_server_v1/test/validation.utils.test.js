@@ -7,7 +7,7 @@ const {
 } = require("../src/service/validation.utils");
 
 test("isValidIban validates UA IBANs", () => {
-  assert.equal(isValidIban("UA1234567890123456789012345"), true);
+  assert.equal(isValidIban("UA663077700000026208121463098"), true);
   assert.equal(isValidIban("UA123"), false);
   assert.equal(isValidIban(""), false);
 });

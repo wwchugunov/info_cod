@@ -8,7 +8,7 @@ function encodeWin1251(str) {
     "и":0xE8,"й":0xE9,"к":0xEA,"л":0xEB,"м":0xEC,"н":0xED,"о":0xEE,"п":0xEF,
     "р":0xF0,"с":0xF1,"т":0xF2,"у":0xF3,"ф":0xF4,"х":0xF5,"ц":0xF6,"ч":0xF7,
     "ш":0xF8,"щ":0xF9,"ъ":0xFA,"ы":0xFB,"ь":0xFC,"э":0xFD,"ю":0xFE,"я":0xFF,
-    "І":0xA6,"і":0xB6,"Ї":0xA7,"ї":0xB7,"Є":0xAA,"є":0xBA
+    "Ґ":0xA5,"ґ":0xB4,"І":0xA6,"і":0xB6,"Ї":0xA7,"ї":0xB7,"Є":0xAA,"є":0xBA
   };
 
   const bytes = [];
@@ -51,8 +51,17 @@ function preparePaymentData(payment) {
 
 
 
+function sanitizeText(value) {
+  return String(value || "")
+    .replace(/[\u201C\u201D\u201E\u201F«»"]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function generateNbuLink({ name, iban, amount, edrpo, purpose }) {
-  validatePaymentData({ name, iban, amount, edrpo });
+  const safeName = sanitizeText(name);
+  const safePurpose = sanitizeText(purpose || "Оплата");
+  validatePaymentData({ name: safeName, iban, amount, edrpo });
 
   const amountNumber = Number(amount);
   const amountStr = Number.isFinite(amountNumber) && amountNumber % 1 === 0
@@ -65,13 +74,13 @@ function generateNbuLink({ name, iban, amount, edrpo, purpose }) {
     "2",
     "UCT",
     "",
-    name,
+    safeName,
     iban,
     amountStr,
     edrpo,
     "",
     "",
-    purpose || "Оплата"
+    safePurpose
   ];
 
   const text = qrLines.join("\n");

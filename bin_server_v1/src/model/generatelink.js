@@ -16,6 +16,7 @@ const Payment = sequelize.define("Payment", {
 
   amount: { type: DataTypes.DECIMAL(15, 2), allowNull: false },
   purpose: { type: DataTypes.STRING, allowNull: false },
+  iban: { type: DataTypes.STRING },
 
   commission_percent: { type: DataTypes.DECIMAL(9, 2), defaultValue: 0 },
   commission_fixed: { type: DataTypes.DECIMAL(9, 2), defaultValue: 0 },

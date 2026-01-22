@@ -23,9 +23,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const banks = {
-    mono: { android: "com.ftband.mono", ios: "mono" },
-    abank: { android: "ua.com.abank", ios: "abank24" },
-    privat24: { android: "ua.privatbank.ap24", ios: "privat24" },
+    mono: { android: "com.ftband.mono", ios: "mono" }, // моно 
+    privat24: { android: "ua.privatbank.ap24", ios: "privat24" }, // привват 
+    abank: { android: "ua.com.abank", ios: "abank24" },  //  абанк
+    pumb: { android: "com.fuib.android.spot.online", ios: "pumb" }, // привват 
+
   };
 
   if (bankButtonsWrap && nbuUrl) {
