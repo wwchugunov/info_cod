@@ -800,9 +800,29 @@ adminController.listScanHistory = async (req, res) => {
     limit,
     offset,
     order: [["created_at", "DESC"]],
+    include: [
+      {
+        model: Payment,
+        attributes: ["id", "amount", "commission_percent", "commission_fixed"],
+      },
+    ],
   });
 
-  let items = result.rows.map((row) => (row.toJSON ? row.toJSON() : row));
+  let items = result.rows.map((row) => {
+    const data = row.toJSON ? row.toJSON() : row;
+    const payment = data.Payment || null;
+    const amount = payment ? Number(payment.amount || 0) : null;
+    const commission = payment
+      ? Number(payment.commission_percent || 0) + Number(payment.commission_fixed || 0)
+      : null;
+    const finalAmount = amount !== null && commission !== null ? amount + commission : null;
+    return {
+      ...data,
+      amount,
+      commission,
+      final_amount: finalAmount,
+    };
+  });
   const scanKeys = items.map((item) => getScanKey(item));
   let scanCounts = {};
   try {
@@ -1483,6 +1503,12 @@ adminController.exportScanHistory = async (req, res) => {
   const history = await ScanHistory.findAll({
     where,
     order: [["created_at", "DESC"]],
+    include: [
+      {
+        model: Payment,
+        attributes: ["id", "amount", "commission_percent", "commission_fixed"],
+      },
+    ],
   });
   const headers = [
     "id",
@@ -1490,6 +1516,9 @@ adminController.exportScanHistory = async (req, res) => {
     "company_id",
     "company_name",
     "link_id",
+    "amount",
+    "commission",
+    "final_amount",
     "client_ip",
     "user_agent",
     "platform",
@@ -1502,12 +1531,22 @@ adminController.exportScanHistory = async (req, res) => {
     "created_at",
     "duplicate_count",
   ];
-  const rows = history.map((h) => [
+  const rows = history.map((h) => {
+    const payment = h.Payment || null;
+    const amount = payment ? Number(payment.amount || 0) : null;
+    const commission = payment
+      ? Number(payment.commission_percent || 0) + Number(payment.commission_fixed || 0)
+      : null;
+    const finalAmount = amount !== null && commission !== null ? amount + commission : null;
+    return [
     h.id,
     h.payment_id,
     h.company_id,
     h.company_name,
     h.link_id,
+    amount,
+    commission,
+    finalAmount,
     h.client_ip,
     h.user_agent,
     h.platform,
@@ -1519,7 +1558,8 @@ adminController.exportScanHistory = async (req, res) => {
     h.is_duplicate,
     h.created_at,
     1,
-  ]);
+    ];
+  });
   const scanKeys = history.map((row) => getScanKey(row));
   const scanCounts = await getScanDuplicateCounts(scanKeys);
   const rowsWithCounts = rows.map((row, index) => {

@@ -106,6 +106,9 @@ export default function Scans() {
               <tr>
                 <th>ID</th>
                 <th>Компанія</th>
+                <th>Сума</th>
+                <th>Комісія</th>
+                <th>Всього</th>
                 <th>Link ID</th>
                 <th>IP</th>
                 <th>Платформа</th>
@@ -123,6 +126,13 @@ export default function Scans() {
                     {h.company_name
                       ? `${h.company_name} (#${h.company_id})`
                       : h.company_id || "—"}
+                  </td>
+                  <td>{h.amount !== null && h.amount !== undefined ? Number(h.amount).toFixed(2) : "—"}</td>
+                  <td>{h.commission !== null && h.commission !== undefined ? Number(h.commission).toFixed(2) : "—"}</td>
+                  <td>
+                    {h.final_amount !== null && h.final_amount !== undefined
+                      ? Number(h.final_amount).toFixed(2)
+                      : "—"}
                   </td>
                   <td>{h.link_id || "—"}</td>
                   <td>{h.client_ip || "—"}</td>

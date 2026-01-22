@@ -11,6 +11,10 @@ const morgan = require('morgan');
 const logger = require('./config/logger');
 const { logError } = require("./admin/service/errorLog.service");
 const {
+  overloadGuard,
+  rateLimitPaymentGenerate,
+} = require("./middleware/overload.middleware");
+const {
   recordRequestMetrics,
   startSystemMetricsSampler,
 } = require("./admin/service/systemMetrics.service");
@@ -113,6 +117,8 @@ app.get('/', (req, res) => {
 
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
+app.use(rateLimitPaymentGenerate);
+app.use(overloadGuard);
 app.use('/api', router);
 app.use('/api', (req, res) => {
   res.status(404).json({

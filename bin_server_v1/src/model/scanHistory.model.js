@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/data_base");
+const Payment = require("./generatelink");
 
 const ScanHistory = sequelize.define(
   "ScanHistory",
@@ -25,5 +26,8 @@ const ScanHistory = sequelize.define(
     underscored: true,
   }
 );
+
+Payment.hasMany(ScanHistory, { foreignKey: "payment_id" });
+ScanHistory.belongsTo(Payment, { foreignKey: "payment_id" });
 
 module.exports = ScanHistory;
