@@ -32,16 +32,16 @@ function base64UrlEncode(bytes) {
 }
 
 function validatePaymentData({ name, iban, amount, edrpo }) {
-  if (!name || !iban || !amount || !edrpo) throw new Error("Неполные данные для платежа");
-  if (!/^UA\d{25,30}$/.test(iban)) throw new Error("Некорректный IBAN");
-  if (!/^(\d{8}|\d{10})$/.test(edrpo)) throw new Error("ЕДРПОУ должен быть 8 или 10 цифр");
-  if (isNaN(Number(amount))) throw new Error("Сумма должна быть числом");
+  if (!name || !iban || !amount || !edrpo) throw new Error("Неповні дані для платежу");
+  if (!/^UA\d{25,30}$/.test(iban)) throw new Error("Некоректний IBAN");
+  if (!/^(\d{8}|\d{10})$/.test(edrpo)) throw new Error("ЄДРПОУ повинен бути 8 або 10 цифр");
+  if (isNaN(Number(amount))) throw new Error("Сума має бути числом");
 }
 
 
 function preparePaymentData(payment) {
   return {
-    name: String(payment.Company?.name || "Без названия").trim().replace(/[\u201C\u201D\u201E\u201F]/g, '"'),
+    name: String(payment.Company?.name || "Без назви").trim().replace(/[\u201C\u201D\u201E\u201F]/g, '"'),
     iban: String(payment.Company?.iban || "").trim(),
     amount: Number(payment.amount || 0),
     edrpo: String(payment.Company?.edrpo || "").trim(),

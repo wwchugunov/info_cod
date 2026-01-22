@@ -23,25 +23,25 @@ async function createPayment(
   tokenHash = null
 ) {
   if (!company) {
-    throw createError("COMPANY_MISSING", "Компания не указана");
+    throw createError("COMPANY_MISSING", "Компанію не вказано");
   }
   const normalizedAmount = Number(amount);
   const normalizedPurpose = normalizeText(purpose);
   const effectiveIban = iban || company.iban;
   if (!effectiveIban) {
-    throw createError("IBAN_MISSING", "IBAN не указан");
+    throw createError("IBAN_MISSING", "IBAN не вказано");
   }
   if (!isValidIban(effectiveIban)) {
-    throw createError("IBAN_INVALID", "Некорректный IBAN");
+    throw createError("IBAN_INVALID", "Некоректний IBAN");
   }
   if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
-    throw createError("AMOUNT_INVALID", "Некорректная сумма платежа");
+    throw createError("AMOUNT_INVALID", "Некоректна сума платежу");
   }
   if (!normalizedPurpose) {
-    throw createError("PURPOSE_MISSING", "Не указано назначение платежа");
+    throw createError("PURPOSE_MISSING", "Не вказано призначення платежу");
   }
   if (normalizedPurpose.length > 255) {
-    throw createError("PURPOSE_TOO_LONG", "Слишком длинное назначение платежа");
+    throw createError("PURPOSE_TOO_LONG", "Надто довге призначення платежу");
   }
   const { start: startOfDay, end: endOfDay } = getDayRange();
 
@@ -56,7 +56,7 @@ async function createPayment(
     });
 
     if (countToday >= dailyLimit) {
-      throw createError("DAILY_LIMIT_REACHED", "Превышен лимит генераций на сегодня");
+      throw createError("DAILY_LIMIT_REACHED", "Перевищено ліміт генерацій на сьогодні");
     }
   }
   const { commissionPercent, commissionFixed, finalAmount } =

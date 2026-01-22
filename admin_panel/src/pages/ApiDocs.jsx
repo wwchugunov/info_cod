@@ -130,7 +130,7 @@ Content-Type: application/json
 Body:
 {
   "amount": 1,
-  "purpose": "Поповнення карти Шлапа!-1ґ-їхік",
+  "purpose": "Поповнення карти",
   "iban": "UA903220010000026209302402931"
 }`}
             </div>
@@ -164,9 +164,9 @@ Body:
     "commissionPercent": 0,
     "commissionFixed": 0,
     "finalAmount": 1,
-    "linkId": "http://infokod.com.ua/api/payment/payment/1bfbce81-efd9-4a8b-8b3b-47543a481ed3",
-    "qr_link": "1bfbce81-efd9-4a8b-8b3b-47543a481ed3",
-    "qrlink": "QkNECjAwMgoyClVDVAoK0s7CIM7Lxc3AClVBOTAzMjIwMDEwMDAwMDI2MjA5MzAyNDAyOTMxClVBSDEKOTI3NDY1OTEKCgrP7u_u4u3l7e3_IOrg8PLoINjr4O_gIS0xtC2_9bPq"
+    "linkId": "http://infokod.com.ua/api/payment/payment/<TOKEN>",
+    "qr_link": "<TOKEN>",
+    "qrlink": "NBU_TOKEN"
   }
 }`}
             </div>
@@ -194,7 +194,7 @@ Body:
               }}
             >
               {`Сторінка оплати:
-https://infokod.com.ua/api/payment/payment/1bfbce81-efd9-4a8b-8b3b-47543a481ed3`}
+https://infokod.com.ua/api/payment/payment/<TOKEN>`}
             </div>
           </div>
         </div>

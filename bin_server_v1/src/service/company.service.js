@@ -14,7 +14,7 @@ function parseNumber(value, fieldName) {
   if (value === undefined || value === null || value === "") return undefined;
   const num = Number(value);
   if (!Number.isFinite(num)) {
-    throw new Error(`Некорректное значение поля ${fieldName}`);
+    throw new Error(`Некоректне значення поля ${fieldName}`);
   }
   return num;
 }
@@ -45,13 +45,13 @@ async function registerCompany(data, options = {}) {
   const normalizedEdrpo = normalizeText(edrpo);
 
   if (!normalizedName || !normalizedContactName || !normalizedContactPhone || !normalizedIban || !normalizedEdrpo) {
-    throw new Error('Не заполнены обязательные поля');
+    throw new Error('Не заповнені обовʼязкові поля');
   }
-  if (!isValidIban(normalizedIban)) {
-    throw new Error('Некорректный IBAN');
-  }
+  // if (!isValidIban(normalizedIban)) {
+  //   throw new Error('Некоректний IBAN');
+  // }
   if (!isValidEdrpo(normalizedEdrpo)) {
-    throw new Error('ЕДРПОУ должен содержать 8 или 10 цифр');
+    throw new Error('ЄДРПОУ повинен містити 8 або 10 цифр');
   }
 
   const normalizedDailyLimit = parseNumber(daily_limit, "daily_limit");
@@ -59,10 +59,10 @@ async function registerCompany(data, options = {}) {
   const normalizedCommissionFixed = parseNumber(commission_fixed, "commission_fixed");
   const normalizedTurnover = parseNumber(turnover, "turnover");
   if (normalizedCommissionPercent !== undefined && normalizedCommissionPercent < 0) {
-    throw new Error("Комиссия не может быть отрицательной");
+    throw new Error("Комісія не може бути відʼємною");
   }
   if (normalizedCommissionFixed !== undefined && normalizedCommissionFixed < 0) {
-    throw new Error("Комиссия не может быть отрицательной");
+    throw new Error("Комісія не може бути відʼємною");
   }
 
   const parentCandidate = await Company.findOne({

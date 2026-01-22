@@ -49,8 +49,13 @@ function buildHistorySqlFilters(query, companyIds, adminCompanyId, companyId) {
     replacements.to = to;
   }
   if (companyIds && companyIds.length) {
-    clauses.push("company_id = ANY(:company_ids)");
-    replacements.company_ids = companyIds;
+    if (companyIds.length === 1) {
+      clauses.push("company_id = :company_id");
+      replacements.company_id = companyIds[0];
+    } else {
+      clauses.push("company_id = ANY(:company_ids)");
+      replacements.company_ids = companyIds;
+    }
   } else if (adminCompanyId) {
     clauses.push("company_id = :company_id");
     replacements.company_id = adminCompanyId;
