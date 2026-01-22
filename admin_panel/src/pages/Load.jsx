@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { formatDateTime, formatTime } from "../utils/date";
 
 function formatBytes(value) {
   const num = Number(value || 0);
@@ -91,14 +92,10 @@ export default function Load() {
               <CartesianGrid stroke="#efe6dc" strokeDasharray="4 4" />
               <XAxis
                 dataKey="timestamp"
-                tickFormatter={(v) =>
-                  v ? new Date(v).toLocaleTimeString() : "—"
-                }
+                tickFormatter={(v) => formatTime(v)}
               />
               <YAxis />
-              <Tooltip
-                labelFormatter={(v) => (v ? new Date(v).toLocaleString() : "—")}
-              />
+              <Tooltip labelFormatter={(v) => formatDateTime(v)} />
               <Line type="monotone" dataKey="cpu_usage_percent" stroke="#ff7a3d" dot={false} />
               <Line
                 type="monotone"

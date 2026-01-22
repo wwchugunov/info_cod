@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import Topbar from "../components/Topbar";
+import { formatDateTime } from "../utils/date";
 
 export default function Errors() {
   const [items, setItems] = useState([]);
@@ -34,11 +35,6 @@ export default function Errors() {
   useEffect(() => {
     load();
   }, [page]);
-
-  const formatDate = (value) => {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
-  };
 
   return (
     <div className="main-area">
@@ -92,7 +88,7 @@ export default function Errors() {
             <tbody>
               {items.map((item) => (
                 <tr key={item.id}>
-                  <td>{formatDate(item.created_at || item.createdAt)}</td>
+                  <td>{formatDateTime(item.created_at || item.createdAt)}</td>
                   <td>{item.source}</td>
                   <td>{item.status_code ?? "—"}</td>
                   <td>{item.path || "—"}</td>

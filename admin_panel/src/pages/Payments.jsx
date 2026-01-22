@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import Topbar from "../components/Topbar";
 import useRole from "../hooks/useRole";
+import { formatDateTime } from "../utils/date";
 
 export default function Payments({ title = "Платежі", subtitle = "Пошук і моніторинг" }) {
   const [items, setItems] = useState([]);
@@ -16,10 +17,6 @@ export default function Payments({ title = "Платежі", subtitle = "Пош�
   const limit = 50;
   const totalPages = total ? Math.ceil(total / limit) : 1;
   const role = useRole();
-  const formatDate = (value) => {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
-  };
   const formatMoney = (value) => Number(value || 0).toFixed(2);
   const sumCommission = (item) =>
     Number(item.commission_percent || 0) + Number(item.commission_fixed || 0);
@@ -139,7 +136,7 @@ export default function Payments({ title = "Платежі", subtitle = "Пош�
                     <td>
                       <span className="badge">{formatStatus(p.status)}</span>
                     </td>
-                    <td>{formatDate(p.created_at || p.createdAt)}</td>
+                    <td>{formatDateTime(p.created_at || p.createdAt)}</td>
                   </tr>
                 );
               })}

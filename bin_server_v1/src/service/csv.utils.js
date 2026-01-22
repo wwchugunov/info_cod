@@ -7,10 +7,18 @@ function escapeCsv(value) {
   return str;
 }
 
-function toCsv(headers, rows) {
-  const headerLine = headers.map(escapeCsv).join(",");
-  const lines = rows.map((row) => row.map(escapeCsv).join(","));
-  return [headerLine, ...lines].join("\n");
+function toCsv(headers, rows, options = {}) {
+  const delimiter = options.delimiter || ";";
+  const includeSepLine =
+    typeof options.includeSepLine === "boolean"
+      ? options.includeSepLine
+      : delimiter === ";";
+  const headerLine = headers.map(escapeCsv).join(delimiter);
+  const lines = rows.map((row) => row.map(escapeCsv).join(delimiter));
+  const allLines = includeSepLine
+    ? [`sep=${delimiter}`, headerLine, ...lines]
+    : [headerLine, ...lines];
+  return allLines.join("\n");
 }
 
 module.exports = { toCsv };

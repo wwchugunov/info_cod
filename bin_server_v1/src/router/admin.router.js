@@ -43,10 +43,26 @@ router.delete(
   adminController.deleteCompany
 );
 
-router.get("/payments", requireAdmin(["superadmin", "manager", "viewer"]), adminController.listPayments);
-router.get("/generation-history", requireAdmin(["superadmin", "manager", "viewer"]), adminController.listGenerationHistory);
-router.get("/scan-history", requireAdmin(["superadmin", "manager", "viewer"]), adminController.listScanHistory);
-router.get("/bank-history", requireAdmin(["superadmin", "manager", "viewer"]), adminController.listBankHistory);
+router.get(
+  "/payments",
+  requireAdmin(["superadmin", "admin", "manager", "viewer"]),
+  adminController.listPayments
+);
+router.get(
+  "/generation-history",
+  requireAdmin(["superadmin", "admin", "manager", "viewer"]),
+  adminController.listGenerationHistory
+);
+router.get(
+  "/scan-history",
+  requireAdmin(["superadmin", "admin", "manager", "viewer"]),
+  adminController.listScanHistory
+);
+router.get(
+  "/bank-history",
+  requireAdmin(["superadmin", "admin", "manager", "viewer"]),
+  adminController.listBankHistory
+);
 router.get(
   "/metrics",
   requireAdmin(["superadmin", "admin", "manager", "viewer"]),

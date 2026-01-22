@@ -77,23 +77,20 @@ export default function Reports() {
       return items;
     };
 
-    const [companies, payments, history, scans] = await Promise.all([
+    const [companies, history, scans] = await Promise.all([
       fetchAll("/admin/companies"),
-      fetchAll("/admin/payments"),
       fetchAll("/admin/generation-history"),
       fetchAll("/admin/scan-history"),
     ]);
 
     const wb = XLSX.utils.book_new();
     const companiesSheet = XLSX.utils.json_to_sheet(companies);
-    const paymentsSheet = XLSX.utils.json_to_sheet(payments);
     const historySheet = XLSX.utils.json_to_sheet(history);
     const scansSheet = XLSX.utils.json_to_sheet(scans);
 
     XLSX.utils.book_append_sheet(wb, companiesSheet, "Companies");
-    XLSX.utils.book_append_sheet(wb, paymentsSheet, "Payments");
-    XLSX.utils.book_append_sheet(wb, historySheet, "History");
-    XLSX.utils.book_append_sheet(wb, scansSheet, "Scans");
+    XLSX.utils.book_append_sheet(wb, historySheet, "GenerationHistory");
+    XLSX.utils.book_append_sheet(wb, scansSheet, "ScanHistory");
 
     XLSX.writeFile(wb, "reports.xlsx", {
       bookType: "xlsx",
@@ -157,17 +154,6 @@ export default function Reports() {
           </button>
         </div>
         <div className="card">
-          <h3>Платежі</h3>
-          <p style={{ color: "#6e6a67" }}>CSV вивантаження</p>
-          <button
-            className="button"
-            onClick={() => downloadCsv("/admin/export/payments.csv", "payments.csv")}
-            disabled={!canDownload}
-          >
-            Завантажити CSV
-          </button>
-        </div>
-        <div className="card">
           <h3>Історія генерацій</h3>
           <p style={{ color: "#6e6a67" }}>CSV вивантаження</p>
           <button
@@ -215,6 +201,31 @@ export default function Reports() {
             <button className="button" onClick={exportPdf} disabled={!canDownload}>
               PDF з графіком
             </button>
+          </div>
+        </div>
+        <div className="card-grid" style={{ marginBottom: 16 }}>
+          <div className="card">
+            <h3>Параметри</h3>
+            <div style={{ color: "#6e6a67", lineHeight: 1.6 }}>
+              <div>Компанія: {filters.company_id || "Усі"}</div>
+              <div>
+                Період: {filters.from || "—"} – {filters.to || "—"}
+              </div>
+            </div>
+          </div>
+          <div className="card">
+            <h3>Сума з комісією</h3>
+            <div className="value">
+              {metrics ? Number(metrics.sum_final_amount).toFixed(2) : "—"}
+            </div>
+          </div>
+          <div className="card">
+            <h3>Усього генерацій</h3>
+            <div className="value">{metrics?.generation_count ?? "—"}</div>
+          </div>
+          <div className="card">
+            <h3>Усього сканувань</h3>
+            <div className="value">{metrics?.scan_count ?? "—"}</div>
           </div>
         </div>
         <div className="card-grid">

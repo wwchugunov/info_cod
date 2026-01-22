@@ -34,6 +34,19 @@ paymentController.generatePayment = async (req, res) => {
       payment: paymentInfo,
     });
   } catch (err) {
+    await logGenerationHistory({
+      company: req.company || null,
+      tokenHash: req.tokenHash || null,
+      status: "failed",
+      amount: Number.isFinite(Number(req.body?.amount))
+        ? Number(req.body.amount)
+        : null,
+      purpose: typeof req.body?.purpose === "string" ? req.body.purpose.trim() : null,
+      clientIp: req.ip,
+      userAgent: req.headers["user-agent"] || null,
+      errorCode: err?.code || "GENERATE_FAILED",
+      errorMessage: err?.message || "Невідома помилка",
+    });
     res.status(400).json({ message: err.message });
   }
 };

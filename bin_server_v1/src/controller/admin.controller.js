@@ -321,7 +321,7 @@ adminController.createCompany = async (req, res) => {
     await AdminUser.create({
       email: login,
       name: company.name,
-      role: "admin",
+      role: "viewer",
       company_id: company.id,
       password_hash: passwordHash,
     });

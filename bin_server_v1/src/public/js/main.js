@@ -9,6 +9,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const nbuUrl = payBtn ? payBtn.dataset.nbuUrl || "" : "";
   const linkId = payBtn ? payBtn.dataset.linkId || "" : "";
 
+
+  
   const sendLog = (url, payload) => {
     try {
       const body = JSON.stringify(payload || {});

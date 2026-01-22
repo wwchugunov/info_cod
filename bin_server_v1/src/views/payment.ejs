@@ -27,19 +27,19 @@
                 <div class="field">
                     <span class="label">Сума:</span>
                     <span class="value">
-                        <%= originalAmount %> грн
+                        <%= Number(originalAmount || 0).toFixed(2) %> грн
                     </span>
                 </div>
                 <div class="field">
                     <span class="label">Комісія:</span>
                     <span class="value">
-                        <%= commissionPercent + commissionFixed %> грн
+                        <%= (Number(commissionPercent || 0) + Number(commissionFixed || 0)).toFixed(2) %> грн
                     </span>
                 </div>
                 <div class="field total">
                     <span>Разом:</span>
                     <span>
-                        <%= finalAmount %> грн
+                        <%= Number(finalAmount || 0).toFixed(2) %> грн
                     </span>
                 </div>
             </div>

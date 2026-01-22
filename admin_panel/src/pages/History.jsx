@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import Topbar from "../components/Topbar";
+import { formatDateTime } from "../utils/date";
 
 export default function History() {
   const [items, setItems] = useState([]);
@@ -17,10 +18,6 @@ export default function History() {
   const [duplicateCount, setDuplicateCount] = useState(0);
   const limit = 50;
   const totalPages = total ? Math.ceil(total / limit) : 1;
-  const formatDate = (value) => {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
-  };
   const formatMoney = (value) => Number(value || 0).toFixed(2);
   const sumCommission = (item) =>
     Number(item.commission_percent || 0) + Number(item.commission_fixed || 0);
@@ -154,7 +151,7 @@ export default function History() {
                       <span className="badge">{formatStatus(h.status)}</span>
                     </td>
                     <td>{h.error_message || h.error_code || "—"}</td>
-                    <td>{formatDate(h.created_at || h.createdAt)}</td>
+                    <td>{formatDateTime(h.created_at || h.createdAt)}</td>
                   </tr>
                 );
               })}

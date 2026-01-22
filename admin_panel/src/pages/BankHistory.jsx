@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import Topbar from "../components/Topbar";
+import { formatDateTime } from "../utils/date";
 
 export default function BankHistory() {
   const [items, setItems] = useState([]);
@@ -14,11 +15,6 @@ export default function BankHistory() {
   const [total, setTotal] = useState(0);
   const limit = 50;
   const totalPages = total ? Math.ceil(total / limit) : 1;
-
-  const formatDate = (value) => {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
-  };
 
   const buildParams = () =>
     Object.fromEntries(
@@ -115,7 +111,7 @@ export default function BankHistory() {
                   <td>{h.platform || "—"}</td>
                   <td>{h.action || "—"}</td>
                   <td>{h.client_ip || "—"}</td>
-                  <td>{formatDate(h.created_at || h.createdAt)}</td>
+                  <td>{formatDateTime(h.created_at || h.createdAt)}</td>
                 </tr>
               ))}
             </tbody>

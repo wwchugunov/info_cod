@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import Topbar from "../components/Topbar";
+import { formatDateTime } from "../utils/date";
 
 export default function Scans() {
   const [items, setItems] = useState([]);
@@ -16,11 +17,6 @@ export default function Scans() {
   const [duplicateCount, setDuplicateCount] = useState(0);
   const limit = 50;
   const totalPages = total ? Math.ceil(total / limit) : 1;
-
-  const formatDate = (value) => {
-    const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
-  };
 
   const buildParams = () => {
     const base = Object.fromEntries(
@@ -142,7 +138,7 @@ export default function Scans() {
                       {h.is_duplicate ? "Повторне" : "Унікальне"}
                     </span>
                   </td>
-                  <td>{formatDate(h.created_at || h.createdAt)}</td>
+                  <td>{formatDateTime(h.created_at || h.createdAt)}</td>
                 </tr>
               ))}
             </tbody>
