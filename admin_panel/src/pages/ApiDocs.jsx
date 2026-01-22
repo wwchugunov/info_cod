@@ -103,7 +103,9 @@ export default function ApiDocs() {
           <div className="card">
             <h3>POST /api/payment/generate</h3>
             <p style={{ color: "#6e6a67" }}>
-              Створення платіжного посилання. Використовуйте токен компанії.
+              Створює платіжне посилання та QR. Потрібен токен компанії в
+              заголовку Authorization. Нижче — повний приклад запиту, який можна
+              відправляти з вашого бекенду/CRM.
             </p>
             <div
               style={{
@@ -115,41 +117,31 @@ export default function ApiDocs() {
                 whiteSpace: "pre-wrap",
               }}
             >
-              {`Headers:
+              {`Request:
+POST /api/payment/generate
+
+Headers:
 Authorization: Bearer TOKEN
 Content-Type: application/json
 
 Body:
 {
-  "amount": 100.5,
-  "purpose": "Оплата послуг",
-  "iban": "UA123..."
+  "amount": 1,
+  "purpose": "Поповнення карти Шлапа!-1ґ-їхік",
+  "iban": "UA903220010000026209302402931"
 }`}
             </div>
-          </div>
-          <div className="card">
-            <h3>GET /api/payment/payment/:linkId</h3>
-            <p style={{ color: "#6e6a67" }}>
-              Відображення сторінки оплати за згенерованим посиланням.
+            <p style={{ color: "#6e6a67", marginTop: 10 }}>
+              <strong>amount</strong> — сума платежу; <strong>purpose</strong> —
+              призначення платежу; <strong>iban</strong> — IBAN отримувача
+              (UA...).
             </p>
-            <div
-              style={{
-                background: "#f6f2ea",
-                padding: "12px 14px",
-                borderRadius: 12,
-                fontFamily: "monospace",
-                color: "#1c1a19",
-                whiteSpace: "pre-wrap",
-              }}
-            >
-              {`Example:
-https://your-domain.com/api/payment/payment/UUID`}
-            </div>
           </div>
           <div className="card">
             <h3>Відповідь</h3>
             <p style={{ color: "#6e6a67" }}>
-              API повертає дані про посилання та суми комісії.
+              Повний приклад відповіді, що повертає API після успішної
+              генерації.
             </p>
             <div
               style={{
@@ -164,14 +156,40 @@ https://your-domain.com/api/payment/payment/UUID`}
               {`{
   "message": "Successfully",
   "payment": {
-    "paymentLink": "https://...",
-    "originalAmount": 100.5,
-    "commissionPercent": 3,
+    "originalAmount": 1,
+    "commissionPercent": 0,
     "commissionFixed": 0,
-    "finalAmount": 103.5,
-    "linkId": "..."
+    "finalAmount": 1,
+    "linkId": "http://infokod.com.ua/api/payment/payment/1bfbce81-efd9-4a8b-8b3b-47543a481ed3",
+    "qr_link": "1bfbce81-efd9-4a8b-8b3b-47543a481ed3",
+    "qrlink": "QkNECjAwMgoyClVDVAoK0s7CIM7Lxc3AClVBOTAzMjIwMDEwMDAwMDI2MjA5MzAyNDAyOTMxClVBSDEKOTI3NDY1OTEKCgrP7u_u4u3l7e3_IOrg8PLoINjr4O_gIS0xtC2_9bPq"
   }
 }`}
+            </div>
+          </div>
+          <div className="card">
+            <h3>Пояснення полів</h3>
+            <p style={{ color: "#6e6a67" }}>
+              <strong>originalAmount</strong> — сума без комісії.
+              <strong> commissionPercent</strong> — відсоткова комісія.
+              <strong> commissionFixed</strong> — фіксована комісія.
+              <strong> finalAmount</strong> — підсумкова сума до сплати.
+              <strong> linkId</strong> — готове посилання на сторінку оплати.
+              <strong> qr_link</strong> — ідентифікатор посилання.
+              <strong> qrlink</strong> — base64 URL‑рядок для генерації QR.
+            </p>
+            <div
+              style={{
+                background: "#f6f2ea",
+                padding: "12px 14px",
+                borderRadius: 12,
+                fontFamily: "monospace",
+                color: "#1c1a19",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {`Сторінка оплати:
+https://your-domain.com/api/payment/payment/:linkId`}
             </div>
           </div>
         </div>
