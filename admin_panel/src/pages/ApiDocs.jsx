@@ -203,18 +203,18 @@ export default function ApiDocs() {
               }}
             >
               {`Request:
-POST ${apiBase}/payment/generate
+                POST ${apiBase}/payment/generate
 
-Headers:
-Authorization: Bearer TOKEN
-Content-Type: application/json
+                Headers:
+                Authorization: Bearer TOKEN
+                Content-Type: application/json
 
-Body:
-{
-  "amount": 1,
-  "purpose": "Поповнення карти",
-  "iban": "UA903220010000026209302402931"
-}`}
+                Body:
+                {
+                  "amount": 1,
+                  "purpose": "Поповнення карти",
+                  "iban": "UA<IBAN>"
+                }`}
             </div>
             <p style={{ color: "#6e6a67", marginTop: 10 }}>
               <strong>amount</strong> — сума платежу в гривнях (число).

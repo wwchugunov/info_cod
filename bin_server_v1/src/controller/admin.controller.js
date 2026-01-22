@@ -185,6 +185,20 @@ function parseNumber(value, fieldName) {
   return num;
 }
 
+function getCsvEncoding(req) {
+  const raw = String(req.query.encoding || "").toLowerCase();
+  if (raw === "win1251" || raw === "cp1251" || raw === "windows-1251") {
+    return { encoding: "win1251", charset: "windows-1251" };
+  }
+  if (raw === "utf16le" || raw === "utf-16le") {
+    return { encoding: "utf16le", charset: "utf-16le" };
+  }
+  if (raw === "utf8" || raw === "utf-8") {
+    return { encoding: "utf8", charset: "utf-8" };
+  }
+  return { encoding: "win1251", charset: "windows-1251" };
+}
+
 const adminController = {};
 
 adminController.listCompanies = async (req, res) => {
@@ -1195,7 +1209,6 @@ adminController.exportCompanies = async (req, res) => {
     "contact_phone",
     "iban",
     "edrpo",
-    "daily_limit",
     "commission_percent",
     "commission_fixed",
     "use_percent_commission",
@@ -1210,7 +1223,6 @@ adminController.exportCompanies = async (req, res) => {
     c.contact_phone,
     c.iban,
     c.edrpo,
-    c.daily_limit,
     c.commission_percent,
     c.commission_fixed,
     c.use_percent_commission,
@@ -1218,8 +1230,9 @@ adminController.exportCompanies = async (req, res) => {
     c.is_active,
     c.created_at,
   ]);
-  const csv = toCsvBuffer(headers, rows);
-  res.setHeader("Content-Type", "text/csv; charset=utf-16le");
+  const csvOptions = getCsvEncoding(req);
+  const csv = toCsvBuffer(headers, rows, csvOptions);
+  res.setHeader("Content-Type", `text/csv; charset=${csvOptions.charset}`);
   res.setHeader("Content-Disposition", "attachment; filename=\"companies.csv\"");
   return res.send(csv);
 };
@@ -1276,8 +1289,9 @@ adminController.exportPayments = async (req, res) => {
     p.created_at,
     p.expires_at,
   ]);
-  const csv = toCsvBuffer(headers, rows);
-  res.setHeader("Content-Type", "text/csv; charset=utf-16le");
+  const csvOptions = getCsvEncoding(req);
+  const csv = toCsvBuffer(headers, rows, csvOptions);
+  res.setHeader("Content-Type", `text/csv; charset=${csvOptions.charset}`);
   res.setHeader("Content-Disposition", "attachment; filename=\"payments.csv\"");
   return res.send(csv);
 };
@@ -1345,8 +1359,9 @@ adminController.exportGenerationHistory = async (req, res) => {
     h.error_code,
     h.error_message,
   ]);
-  const csv = toCsvBuffer(headers, rows);
-  res.setHeader("Content-Type", "text/csv; charset=utf-16le");
+  const csvOptions = getCsvEncoding(req);
+  const csv = toCsvBuffer(headers, rows, csvOptions);
+  res.setHeader("Content-Type", `text/csv; charset=${csvOptions.charset}`);
   res.setHeader("Content-Disposition", "attachment; filename=\"generation-history.csv\"");
   return res.send(csv);
 };
@@ -1414,8 +1429,9 @@ adminController.exportScanHistory = async (req, res) => {
     h.is_duplicate,
     h.created_at,
   ]);
-  const csv = toCsvBuffer(headers, rows);
-  res.setHeader("Content-Type", "text/csv; charset=utf-16le");
+  const csvOptions = getCsvEncoding(req);
+  const csv = toCsvBuffer(headers, rows, csvOptions);
+  res.setHeader("Content-Type", `text/csv; charset=${csvOptions.charset}`);
   res.setHeader("Content-Disposition", "attachment; filename=\"scan-history.csv\"");
   return res.send(csv);
 };
@@ -1479,8 +1495,9 @@ adminController.exportBankHistory = async (req, res) => {
     h.user_agent,
     h.created_at,
   ]);
-  const csv = toCsvBuffer(headers, rows);
-  res.setHeader("Content-Type", "text/csv; charset=utf-16le");
+  const csvOptions = getCsvEncoding(req);
+  const csv = toCsvBuffer(headers, rows, csvOptions);
+  res.setHeader("Content-Type", `text/csv; charset=${csvOptions.charset}`);
   res.setHeader("Content-Disposition", "attachment; filename=\"bank-history.csv\"");
   return res.send(csv);
 };

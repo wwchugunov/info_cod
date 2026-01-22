@@ -31,9 +31,6 @@ async function createPayment(
   if (!effectiveIban) {
     throw createError("IBAN_MISSING", "IBAN не вказано");
   }
-  if (!isValidIban(effectiveIban)) {
-    throw createError("IBAN_INVALID", "Некоректний IBAN");
-  }
   if (!Number.isFinite(normalizedAmount) || normalizedAmount <= 0) {
     throw createError("AMOUNT_INVALID", "Некоректна сума платежу");
   }

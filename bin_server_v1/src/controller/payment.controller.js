@@ -3,6 +3,7 @@ const Payment = require("../model/generatelink");
 const Company = require("../model/company.model");
 const { calculateCommission } = require("../service/payment.utils");
 const { generateNbuLink } = require("../service/nbu.service");
+const { logGenerationHistory } = require("../service/generationHistory.service");
 const { logScanHistory } = require("../service/scanHistory.service");
 const { logBankHistory } = require("../service/bankHistory.service");
 
@@ -10,7 +11,7 @@ const paymentController = {};
 
 paymentController.generatePayment = async (req, res) => {
   try {
-    const { amount, purpose } = req.body;
+    const { amount, purpose } = req.body || {};
     const company = req.company;
 
     if (!amount || !purpose) {

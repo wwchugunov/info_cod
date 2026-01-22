@@ -1,7 +1,9 @@
-function escapeCsv(value) {
+function escapeCsv(value, delimiter) {
   if (value === null || value === undefined) return "";
   const str = String(value);
-  if (/[",\n]/.test(str)) {
+  const needsQuotes =
+    /[",\n\r]/.test(str) || (delimiter && str.includes(delimiter));
+  if (needsQuotes) {
     return `"${str.replace(/"/g, '""')}"`;
   }
   return str;
@@ -9,22 +11,56 @@ function escapeCsv(value) {
 
 function toCsv(headers, rows, options = {}) {
   const delimiter = options.delimiter || ";";
+  const lineSeparator = options.lineSeparator || "\r\n";
   const includeSepLine =
     typeof options.includeSepLine === "boolean"
       ? options.includeSepLine
       : delimiter === ";";
-  const headerLine = headers.map(escapeCsv).join(delimiter);
-  const lines = rows.map((row) => row.map(escapeCsv).join(delimiter));
+  const headerLine = headers.map((value) => escapeCsv(value, delimiter)).join(delimiter);
+  const lines = rows.map((row) =>
+    row.map((value) => escapeCsv(value, delimiter)).join(delimiter)
+  );
   const allLines = includeSepLine
     ? [`sep=${delimiter}`, headerLine, ...lines]
     : [headerLine, ...lines];
-  return allLines.join("\n");
+  return allLines.join(lineSeparator);
+}
+
+function encodeWin1251(str) {
+  const table = {
+    "А":0xC0,"Б":0xC1,"В":0xC2,"Г":0xC3,"Д":0xC4,"Е":0xC5,"Ж":0xC6,"З":0xC7,
+    "И":0xC8,"Й":0xC9,"К":0xCA,"Л":0xCB,"М":0xCC,"Н":0xCD,"О":0xCE,"П":0xCF,
+    "Р":0xD0,"С":0xD1,"Т":0xD2,"У":0xD3,"Ф":0xD4,"Х":0xD5,"Ц":0xD6,"Ч":0xD7,
+    "Ш":0xD8,"Щ":0xD9,"Ъ":0xDA,"Ы":0xDB,"Ь":0xDC,"Э":0xDD,"Ю":0xDE,"Я":0xDF,
+    "а":0xE0,"б":0xE1,"в":0xE2,"г":0xE3,"д":0xE4,"е":0xE5,"ж":0xE6,"з":0xE7,
+    "и":0xE8,"й":0xE9,"к":0xEA,"л":0xEB,"м":0xEC,"н":0xED,"о":0xEE,"п":0xEF,
+    "р":0xF0,"с":0xF1,"т":0xF2,"у":0xF3,"ф":0xF4,"х":0xF5,"ц":0xF6,"ч":0xF7,
+    "ш":0xF8,"щ":0xF9,"ъ":0xFA,"ы":0xFB,"ь":0xFC,"э":0xFD,"ю":0xFE,"я":0xFF,
+    "Ґ":0xA5,"ґ":0xB4,"І":0xB2,"і":0xB3,"Ї":0xAF,"ї":0xBF,"Є":0xAA,"є":0xBA,
+  };
+
+  const bytes = [];
+  for (const ch of str) {
+    const code = ch.charCodeAt(0);
+    if (code < 128) {
+      bytes.push(code);
+    } else if (table[ch]) {
+      bytes.push(table[ch]);
+    } else {
+      bytes.push(63);
+    }
+  }
+  return bytes;
 }
 
 function toCsvBuffer(headers, rows, options = {}) {
-  const encoding = options.encoding || "utf16le";
-  const csv = `\ufeff${toCsv(headers, rows, options)}`;
-  return Buffer.from(csv, encoding);
+  const encoding = options.encoding || "win1251";
+  const csv = toCsv(headers, rows, options);
+  if (encoding === "win1251" || encoding === "cp1251" || encoding === "windows-1251") {
+    return Buffer.from(encodeWin1251(csv));
+  }
+  const withBom = `\ufeff${csv}`;
+  return Buffer.from(withBom, encoding);
 }
 
 module.exports = { toCsv, toCsvBuffer };

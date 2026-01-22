@@ -10,7 +10,7 @@ const links = [
   { to: "/scans", label: "Сканування", roles: ["superadmin", "admin", "manager", "viewer"] },
   { to: "/reports", label: "Звіти", roles: ["superadmin", "admin", "manager"] },
   { to: "/api", label: "API", roles: ["superadmin", "admin", "manager", "viewer"] },
-  { to: "/users", label: "Адмін‑користувачі", roles: ["superadmin"] },
+  { to: "/users", label: "Користувачі", roles: ["superadmin"] },
   { to: "/errors", label: "Помилки", roles: ["superadmin"] },
   { to: "/load", label: "Навантаження", roles: ["superadmin"] },
   { to: "/settings", label: "Налаштування", roles: ["superadmin", "admin", "manager", "viewer"] },
