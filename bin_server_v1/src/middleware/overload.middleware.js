@@ -2,6 +2,7 @@ const RATE_WINDOW_MS = Number(process.env.RATE_LIMIT_WINDOW_MS || 60000);
 const RATE_MAX = Number(process.env.RATE_LIMIT_MAX || 30);
 const MAX_CONCURRENT = Number(process.env.MAX_CONCURRENT_REQUESTS || 120);
 const MAX_AVG_MS = Number(process.env.MAX_AVG_RESPONSE_MS || 1500);
+const DISABLE_OVERLOAD = String(process.env.DISABLE_OVERLOAD || "").toLowerCase() === "1";
 
 const rateState = new Map();
 const latencySamples = [];
@@ -28,6 +29,9 @@ function avgLatency() {
 }
 
 function rateLimitPaymentGenerate(req, res, next) {
+  if (DISABLE_OVERLOAD) {
+    return next();
+  }
   if (req.method !== "POST" || !req.path.startsWith("/api/payment/generate")) {
     return next();
   }
@@ -49,6 +53,9 @@ function rateLimitPaymentGenerate(req, res, next) {
 }
 
 function overloadGuard(req, res, next) {
+  if (DISABLE_OVERLOAD) {
+    return next();
+  }
   if (!req.path.startsWith("/api/payment") && !req.path.startsWith("/payment")) {
     return next();
   }
