@@ -17,7 +17,6 @@ const {
 const host = process.env.HOST || undefined;
 const port = Number(process.env.PORT);
 const paymentRouter = require('./router/payment.router.js');
-const { error } = require('console');
 
 
 const app = express();
@@ -82,8 +81,19 @@ app.use((req, res, next) => {
 });
 app.use(recordRequestMetrics);
 const adminDistPath = path.join(__dirname, '../../admin_panel/dist');
-app.use('/admin', express.static(adminDistPath, { index: false }));
+app.use(
+  '/admin',
+  express.static(adminDistPath, {
+    index: false,
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-store');
+      }
+    },
+  })
+);
 app.get(/^\/admin(\/.*)?$/, (req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
   res.sendFile(path.join(adminDistPath, 'index.html'));
 });
 app.use(
@@ -133,10 +143,13 @@ app.use((err, req, res, next) => {
 const start = async () => {
   try {
     await sequelize.authenticate();
-    // console.log('PostgreSQL connected'); база не спамить 
-    await sequelize.sync({ alter: true }); 
+    if (process.env.DB_SYNC === "true") {
+      await sequelize.sync({ alter: process.env.DB_SYNC_ALTER === "true" });
+    }
     await adminSequelize.authenticate();
-    await adminSequelize.sync();
+    if (process.env.ADMIN_DB_SYNC === "true") {
+      await adminSequelize.sync({ alter: process.env.ADMIN_DB_SYNC_ALTER === "true" });
+    }
     await ensureSuperAdmin();
     startSystemMetricsSampler({ intervalMs: 10000 });
     const server = http.createServer(app);

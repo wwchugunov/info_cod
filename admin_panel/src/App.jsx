@@ -1,4 +1,5 @@
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { useState } from "react";
 import Sidebar from "./components/Sidebar";
 import Dashboard from "./pages/Dashboard";
 import Companies from "./pages/Companies";
@@ -22,9 +23,28 @@ function ProtectedLayout() {
     return <Navigate to="/login" replace />;
   }
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const closeSidebar = () => setSidebarOpen(false);
+
   return (
-    <div className="app-shell">
-      <Sidebar />
+    <div className={`app-shell ${sidebarOpen ? "sidebar-open" : ""}`}>
+      <button
+        className="burger-button"
+        type="button"
+        aria-label="Відкрити меню"
+        onClick={() => setSidebarOpen(true)}
+      >
+        <span />
+        <span />
+        <span />
+      </button>
+      <button
+        className={`sidebar-backdrop ${sidebarOpen ? "is-visible" : ""}`}
+        type="button"
+        aria-label="Закрити меню"
+        onClick={closeSidebar}
+      />
+      <Sidebar onClose={closeSidebar} onNavigate={closeSidebar} />
       <Outlet />
     </div>
   );

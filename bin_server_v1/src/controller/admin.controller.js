@@ -185,6 +185,54 @@ function parseNumber(value, fieldName) {
   return num;
 }
 
+function getGenerationKey(row) {
+  if (row.token_hash) return row.token_hash;
+  if (row.link_id) return String(row.link_id);
+  return String(row.id);
+}
+
+function getScanKey(row) {
+  return row.link_id ? String(row.link_id) : "";
+}
+
+async function getGenerationDuplicateCounts(keys) {
+  if (!keys.length) return {};
+  const rows = await GenerationHistory.sequelize.query(
+    `
+      SELECT
+        COALESCE(token_hash, link_id::text, id::text) AS key,
+        COUNT(*)::int AS cnt
+      FROM generation_history
+      WHERE COALESCE(token_hash, link_id::text, id::text) IN (:keys)
+      GROUP BY key;
+    `,
+    { replacements: { keys }, type: QueryTypes.SELECT }
+  );
+  return rows.reduce((acc, row) => {
+    acc[row.key] = Number(row.cnt) || 0;
+    return acc;
+  }, {});
+}
+
+async function getScanDuplicateCounts(keys) {
+  if (!keys.length) return {};
+  const rows = await ScanHistory.sequelize.query(
+    `
+      SELECT
+        link_id::text AS key,
+        COUNT(*)::int AS cnt
+      FROM scan_history
+      WHERE link_id::text IN (:keys)
+      GROUP BY key;
+    `,
+    { replacements: { keys }, type: QueryTypes.SELECT }
+  );
+  return rows.reduce((acc, row) => {
+    acc[row.key] = Number(row.cnt) || 0;
+    return acc;
+  }, {});
+}
+
 function getCsvEncoding(req) {
   const raw = String(req.query.encoding || "").toLowerCase();
   if (raw === "win1251" || raw === "cp1251" || raw === "windows-1251") {
@@ -701,6 +749,19 @@ adminController.listGenerationHistory = async (req, res) => {
     total = result.count;
   }
 
+  const generationKeys = items.map((item) => getGenerationKey(item)).filter(Boolean);
+  let generationCounts = {};
+  try {
+    generationCounts = await getGenerationDuplicateCounts(generationKeys);
+  } catch (err) {
+    console.error("Failed to load generation duplicate counts:", err?.message || err);
+  }
+  items = items.map((item) => {
+    const obj = item.toJSON ? item.toJSON() : item;
+    const key = getGenerationKey(obj);
+    return { ...obj, duplicate_count: generationCounts[key] || 1 };
+  });
+
   return res.json({
     page,
     limit,
@@ -741,6 +802,19 @@ adminController.listScanHistory = async (req, res) => {
     order: [["created_at", "DESC"]],
   });
 
+  let items = result.rows.map((row) => (row.toJSON ? row.toJSON() : row));
+  const scanKeys = items.map((item) => getScanKey(item));
+  let scanCounts = {};
+  try {
+    scanCounts = await getScanDuplicateCounts(scanKeys);
+  } catch (err) {
+    console.error("Failed to load scan duplicate counts:", err?.message || err);
+  }
+  items = items.map((item) => ({
+    ...item,
+    duplicate_count: scanCounts[getScanKey(item)] || 1,
+  }));
+
   const baseWhere = { ...where };
   delete baseWhere.is_duplicate;
 
@@ -757,7 +831,7 @@ adminController.listScanHistory = async (req, res) => {
     total: result.count,
     unique_count: uniqueCount,
     duplicate_count: duplicateCount,
-    items: result.rows,
+    items,
   });
 };
 
@@ -832,6 +906,7 @@ adminController.listHistory = async (req, res) => {
           status,
           error_code,
           error_message,
+          COUNT(*) OVER (PARTITION BY COALESCE(token_hash, link_id::text, id::text))::int AS duplicate_count,
           NULL::boolean AS is_duplicate,
           NULL::text AS platform,
           NULL::text AS device,
@@ -875,6 +950,7 @@ adminController.listHistory = async (req, res) => {
           NULL::text AS status,
           NULL::text AS error_code,
           NULL::text AS error_message,
+          COUNT(*) OVER (PARTITION BY link_id)::int AS duplicate_count,
           is_duplicate,
           platform,
           device,
@@ -930,6 +1006,7 @@ adminController.listHistory = async (req, res) => {
           status,
           error_code,
           error_message,
+          COUNT(*) OVER (PARTITION BY COALESCE(token_hash, link_id::text, id::text))::int AS duplicate_count,
           NULL::boolean AS is_duplicate,
           NULL::text AS platform,
           NULL::text AS device,
@@ -954,6 +1031,7 @@ adminController.listHistory = async (req, res) => {
           NULL::text AS status,
           NULL::text AS error_code,
           NULL::text AS error_message,
+          COUNT(*) OVER (PARTITION BY link_id)::int AS duplicate_count,
           is_duplicate,
           platform,
           device,
@@ -1340,6 +1418,7 @@ adminController.exportGenerationHistory = async (req, res) => {
     "status",
     "error_code",
     "error_message",
+    "duplicate_count",
   ];
   const rows = history.map((h) => [
     h.id,
@@ -1358,9 +1437,19 @@ adminController.exportGenerationHistory = async (req, res) => {
     h.status,
     h.error_code,
     h.error_message,
+    1,
   ]);
+  const generationKeys = history.map((row) => getGenerationKey(row)).filter(Boolean);
+  const generationCounts = await getGenerationDuplicateCounts(generationKeys);
+  const rowsWithCounts = rows.map((row, index) => {
+    const key = getGenerationKey(history[index]);
+    const duplicateCount = generationCounts[key] || 1;
+    const updated = [...row];
+    updated[updated.length - 1] = duplicateCount;
+    return updated;
+  });
   const csvOptions = getCsvEncoding(req);
-  const csv = toCsvBuffer(headers, rows, csvOptions);
+  const csv = toCsvBuffer(headers, rowsWithCounts, csvOptions);
   res.setHeader("Content-Type", `text/csv; charset=${csvOptions.charset}`);
   res.setHeader("Content-Disposition", "attachment; filename=\"generation-history.csv\"");
   return res.send(csv);
@@ -1411,6 +1500,7 @@ adminController.exportScanHistory = async (req, res) => {
     "device",
     "is_duplicate",
     "created_at",
+    "duplicate_count",
   ];
   const rows = history.map((h) => [
     h.id,
@@ -1428,9 +1518,19 @@ adminController.exportScanHistory = async (req, res) => {
     h.device,
     h.is_duplicate,
     h.created_at,
+    1,
   ]);
+  const scanKeys = history.map((row) => getScanKey(row));
+  const scanCounts = await getScanDuplicateCounts(scanKeys);
+  const rowsWithCounts = rows.map((row, index) => {
+    const key = getScanKey(history[index]);
+    const duplicateCount = scanCounts[key] || 1;
+    const updated = [...row];
+    updated[updated.length - 1] = duplicateCount;
+    return updated;
+  });
   const csvOptions = getCsvEncoding(req);
-  const csv = toCsvBuffer(headers, rows, csvOptions);
+  const csv = toCsvBuffer(headers, rowsWithCounts, csvOptions);
   res.setHeader("Content-Type", `text/csv; charset=${csvOptions.charset}`);
   res.setHeader("Content-Disposition", "attachment; filename=\"scan-history.csv\"");
   return res.send(csv);

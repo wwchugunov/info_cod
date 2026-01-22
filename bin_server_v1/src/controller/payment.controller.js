@@ -71,12 +71,12 @@ paymentController.getPaymentByLink = async (req, res) => {
     // Увеличиваем счетчик переходов
     await payment.increment("views_count");
 
-    await logScanHistory({
+    logScanHistory({
       payment,
       clientIp: req.ip,
       userAgent: req.headers["user-agent"] || null,
       referrer: req.headers["referer"] || null,
-    });
+    }).catch(() => {});
 
     const currentAmount = Number(payment.amount);
     const { commissionPercent, commissionFixed, finalAmount } = calculateCommission(

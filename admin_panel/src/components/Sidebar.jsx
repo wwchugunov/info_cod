@@ -16,7 +16,7 @@ const links = [
   { to: "/settings", label: "Налаштування", roles: ["superadmin", "admin", "manager", "viewer"] },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onClose, onNavigate }) {
   const { role, email } = useAdminInfo();
   const brandLabel = import.meta.env.VITE_APP_BRAND || "—";
   const roleLabel = {
@@ -28,12 +28,22 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="brand">{brandLabel}</div>
+      <div className="sidebar-header">
+        <div className="brand">{brandLabel}</div>
+        <button
+          className="sidebar-close"
+          type="button"
+          aria-label="Закрити меню"
+          onClick={onClose}
+        >
+          ×
+        </button>
+      </div>
       <nav className="nav">
         {links
           .filter((link) => hasRole(role, link.roles))
           .map((link) => (
-            <NavLink key={link.to} to={link.to}>
+            <NavLink key={link.to} to={link.to} onClick={onNavigate}>
               {link.label}
             </NavLink>
           ))}

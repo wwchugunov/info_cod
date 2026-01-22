@@ -7,6 +7,13 @@ const { buildPaymentLink } = require("./url.utils");
 const { isValidIban, normalizeText } = require("./validation.utils");
 const { logGenerationHistory } = require("./generationHistory.service");
 
+const dailyCountCache = new Map();
+const DAILY_COUNT_TTL_MS = 30000;
+
+function getDailyCacheKey(companyId, dayStart) {
+  return `${companyId}:${dayStart.toISOString().slice(0, 10)}`;
+}
+
 function createError(code, message) {
   const err = new Error(message);
   err.code = code;
@@ -45,16 +52,28 @@ async function createPayment(
   const dailyLimitEnabled = company.use_daily_limit !== false;
   const dailyLimit = Number(company.daily_limit);
   if (dailyLimitEnabled && Number.isFinite(dailyLimit) && dailyLimit > 0) {
-    const countToday = await Payment.count({
-      where: {
-        company_id: company.id,
-        created_at: { [Op.gte]: startOfDay, [Op.lt]: endOfDay },
-      },
-    });
+    const cacheKey = getDailyCacheKey(company.id, startOfDay);
+    const cached = dailyCountCache.get(cacheKey);
+    let countToday = null;
+    if (cached && cached.expiresAt > Date.now()) {
+      countToday = cached.count;
+    } else {
+      countToday = await Payment.count({
+        where: {
+          company_id: company.id,
+          created_at: { [Op.gte]: startOfDay, [Op.lt]: endOfDay },
+        },
+      });
+    }
 
     if (countToday >= dailyLimit) {
       throw createError("DAILY_LIMIT_REACHED", "Перевищено ліміт генерацій на сьогодні");
     }
+
+    dailyCountCache.set(cacheKey, {
+      count: countToday,
+      expiresAt: Math.min(endOfDay.getTime(), Date.now() + DAILY_COUNT_TTL_MS),
+    });
   }
   const { commissionPercent, commissionFixed, finalAmount } =
     calculateCommission(company, normalizedAmount);
@@ -74,7 +93,17 @@ async function createPayment(
     expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
   });
 
-  await logGenerationHistory({
+  if (dailyLimitEnabled && Number.isFinite(dailyLimit) && dailyLimit > 0) {
+    const cacheKey = getDailyCacheKey(company.id, startOfDay);
+    const cached = dailyCountCache.get(cacheKey);
+    const nextCount = cached ? cached.count + 1 : 1;
+    dailyCountCache.set(cacheKey, {
+      count: nextCount,
+      expiresAt: Math.min(endOfDay.getTime(), Date.now() + DAILY_COUNT_TTL_MS),
+    });
+  }
+
+  logGenerationHistory({
     company,
     tokenHash,
     status: "success",
@@ -86,7 +115,7 @@ async function createPayment(
     linkId,
     clientIp: client_ip,
     userAgent: user_agent,
-  });
+  }).catch(() => {});
 
 
 

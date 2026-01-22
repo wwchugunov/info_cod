@@ -53,8 +53,13 @@ export default function History({
   };
 
   useEffect(() => {
+    setTypeFilter(fixedType);
+    setPage(1);
+  }, [fixedType]);
+
+  useEffect(() => {
     load();
-  }, [page]);
+  }, [page, effectiveType]);
 
   const applyFilters = () => {
     if (page !== 1) {
@@ -140,13 +145,15 @@ export default function History({
                 const total = Number(h.amount || 0) + commission;
                 const isScan = h.kind === "scan";
                 const typeLabel = isScan ? "Сканування" : "Генерація";
+                const duplicateCount = Number(h.duplicate_count || 0);
+                const scanDuplicate = isScan && (h.is_duplicate || duplicateCount > 1);
                 const statusLabel = isScan
-                  ? h.is_duplicate
+                  ? scanDuplicate
                     ? "Повторне"
                     : "Унікальне"
                   : formatStatus(h.status);
                 const badgeClass = isScan
-                  ? h.is_duplicate
+                  ? scanDuplicate
                     ? "badge badge-warning"
                     : "badge badge-success"
                   : h.status === "failed"
@@ -167,7 +174,12 @@ export default function History({
                     <td>{isScan ? "—" : formatMoney(commission)}</td>
                     <td>{isScan ? "—" : formatMoney(total)}</td>
                     <td>
-                      <span className={badgeClass}>{statusLabel}</span>
+                      <span className={badgeClass}>
+                        {statusLabel}
+                        {scanDuplicate && duplicateCount > 1 ? (
+                          <span className="badge-count">{duplicateCount}</span>
+                        ) : null}
+                      </span>
                     </td>
                     <td>{isScan ? "—" : h.error_message || h.error_code || "—"}</td>
                     <td>{formatDateTime(h.created_at || h.createdAt)}</td>

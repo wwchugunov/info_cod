@@ -14,6 +14,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { formatDate } from "../utils/date";
 
 export default function Reports() {
   const [filters, setFilters] = useState({
@@ -273,11 +274,11 @@ export default function Reports() {
               <CartesianGrid stroke="#efe6dc" strokeDasharray="4 4" />
               <XAxis
                 dataKey="bucket"
-                tickFormatter={(v) => new Date(v).toLocaleDateString()}
+                tickFormatter={(v) => formatDate(v)}
               />
               <YAxis />
               <Tooltip
-                labelFormatter={(v) => new Date(v).toLocaleDateString()}
+                labelFormatter={(v) => formatDate(v)}
               />
               <Bar dataKey="amount" fill="#ff7a3d" />
               <Bar dataKey="commission" fill="#0f8b8d" />

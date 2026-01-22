@@ -47,9 +47,6 @@ async function registerCompany(data, options = {}) {
   if (!normalizedName || !normalizedContactName || !normalizedContactPhone || !normalizedIban || !normalizedEdrpo) {
     throw new Error('Не заповнені обовʼязкові поля');
   }
-  // if (!isValidIban(normalizedIban)) {
-  //   throw new Error('Некоректний IBAN');
-  // }
   if (!isValidEdrpo(normalizedEdrpo)) {
     throw new Error('ЄДРПОУ повинен містити 8 або 10 цифр');
   }

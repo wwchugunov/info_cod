@@ -13,7 +13,7 @@ module.exports = {
         DB_PAS: 'ADOlfgitler1945',
         DB_PORT: 5432
       },
-      watch: true                 // отключаем авто-watch (можно true для dev)
+      watch: false                // отключаем авто-watch (можно true для dev)
     }
   ]
 };

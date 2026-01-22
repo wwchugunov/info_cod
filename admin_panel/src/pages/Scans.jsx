@@ -106,7 +106,6 @@ export default function Scans() {
               <tr>
                 <th>ID</th>
                 <th>Компанія</th>
-                <th>Платіж</th>
                 <th>Link ID</th>
                 <th>IP</th>
                 <th>Платформа</th>
@@ -125,22 +124,33 @@ export default function Scans() {
                       ? `${h.company_name} (#${h.company_id})`
                       : h.company_id || "—"}
                   </td>
-                  <td>{h.payment_id || "—"}</td>
                   <td>{h.link_id || "—"}</td>
                   <td>{h.client_ip || "—"}</td>
                   <td>{h.platform || "—"}</td>
                   <td>{h.device || "—"}</td>
-                  <td style={{ maxWidth: 240, wordBreak: "break-all" }}>
+                  <td
+                    className="ua-cell"
+                    title={h.user_agent || ""}
+                  >
                     {h.user_agent || "—"}
                   </td>
                   <td>
-                    <span
-                      className={
-                        h.is_duplicate ? "badge badge-warning" : "badge badge-success"
-                      }
-                    >
-                      {h.is_duplicate ? "Повторне" : "Унікальне"}
-                    </span>
+                    {(() => {
+                      const duplicateCount = Number(h.duplicate_count || 0);
+                      const isDuplicate = h.is_duplicate || duplicateCount > 1;
+                      return (
+                        <span
+                          className={
+                            isDuplicate ? "badge badge-warning" : "badge badge-success"
+                          }
+                        >
+                          {isDuplicate ? "Повторне" : "Унікальне"}
+                          {isDuplicate && duplicateCount > 1 ? (
+                            <span className="badge-count">{duplicateCount}</span>
+                          ) : null}
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td>{formatDateTime(h.created_at || h.createdAt)}</td>
                 </tr>

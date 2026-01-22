@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { formatDate } from "../utils/date";
 
 export default function Dashboard() {
   const [metrics, setMetrics] = useState(null);
@@ -78,12 +79,14 @@ export default function Dashboard() {
           <input
             className="input"
             type="date"
+            lang="uk"
             value={filters.from}
             onChange={(e) => setFilters({ ...filters, from: e.target.value })}
           />
           <input
             className="input"
             type="date"
+            lang="uk"
             value={filters.to}
             onChange={(e) => setFilters({ ...filters, to: e.target.value })}
           />
@@ -100,7 +103,6 @@ export default function Dashboard() {
       </div>
       <div className="card-grid">
         {[
-          { label: "Платежів", value: metrics?.payments_count ?? "—" },
           { label: "Генерацій", value: metrics?.generation_count ?? "—" },
           {
             label: "Генерацій (унікальні)",
@@ -119,7 +121,7 @@ export default function Dashboard() {
             value: metrics?.scan_duplicate_count ?? "—",
           },
           {
-            label: "Сума платежів",
+            label: "Сума",
             value: metrics ? Number(metrics.sum_amount).toFixed(2) : "—",
           },
           {
@@ -131,7 +133,7 @@ export default function Dashboard() {
               : "—",
           },
           {
-            label: "Підсумок",
+            label: "Всього",
             value: metrics ? Number(metrics.sum_final_amount).toFixed(2) : "—",
           },
         ].map((card) => (
@@ -152,11 +154,11 @@ export default function Dashboard() {
               <CartesianGrid stroke="#efe6dc" strokeDasharray="4 4" />
               <XAxis
                 dataKey="bucket"
-                tickFormatter={(v) => new Date(v).toLocaleDateString()}
+                tickFormatter={(v) => formatDate(v)}
               />
               <YAxis />
               <Tooltip
-                labelFormatter={(v) => new Date(v).toLocaleDateString()}
+                labelFormatter={(v) => formatDate(v)}
               />
               <Line
                 type="monotone"

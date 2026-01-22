@@ -31,7 +31,6 @@ adminAuthController.login = async (req, res) => {
   admin.last_login_at = new Date();
   await admin.save();
 
-  // TODO: 2FA hook - здесь можно добавить проверку одноразового кода
   const tokens = await issueTokens(admin, req);
   return res.json({
     access_token: tokens.accessToken,

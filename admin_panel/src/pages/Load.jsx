@@ -23,6 +23,11 @@ function formatBytes(value) {
 export default function Load() {
   const [metrics, setMetrics] = useState([]);
   const [latest, setLatest] = useState(null);
+  const maxThroughput = {
+    generateRps: 13,
+    paymentPageRps: 120,
+    note: "тест 20с, CPU ≤85%",
+  };
 
   const load = () => {
     api
@@ -67,6 +72,16 @@ export default function Load() {
         <div className="card">
           <h3>RPS</h3>
           <div className="value">{latest ? latest.rps : "—"}</div>
+        </div>
+        <div className="card">
+          <h3>Макс. пропускна здатність</h3>
+          <div className="value">
+            {maxThroughput.generateRps} запитів/с
+          </div>
+          <div className="muted-text">
+            Генерація платежу • /payment ~{maxThroughput.paymentPageRps} RPS
+          </div>
+          <div className="muted-text">{maxThroughput.note}</div>
         </div>
         <div className="card">
           <h3>Помилки</h3>

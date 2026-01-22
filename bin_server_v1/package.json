@@ -4,9 +4,13 @@
   "description": "",
   "main": "./src/index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
     "test": "node --test",
+    "migrate": "node scripts/migrate.js --db=all",
+    "migrate:main": "node scripts/migrate.js --db=main",
+    "migrate:admin": "node scripts/migrate.js --db=admin",
+    "db:maintenance": "node scripts/db-maintenance.js",
     "seed": "node scripts/seed.js",
     "check-logs": "node scripts/check-logs.js"
   },
@@ -20,11 +24,9 @@
     "dotenv": "^17.2.3",
     "ejs": "^3.1.10",
     "express": "^5.2.1",
-    "http": "^0.0.1-security",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
     "pg": "^8.16.3",
-    "qrcode": "^1.5.4",
     "sequelize": "^6.37.7",
     "uuid": "^13.0.0",
     "winston": "^3.19.0"
