@@ -580,7 +580,7 @@ adminController.listGenerationHistory = async (req, res) => {
   const countsRows = await GenerationHistory.sequelize.query(
     `
       WITH filtered AS (
-        SELECT COALESCE(link_id::text, id::text) AS key
+        SELECT COALESCE(token_hash, link_id::text, id::text) AS key
         FROM generation_history
         ${historySql}
       ),
@@ -611,7 +611,7 @@ adminController.listGenerationHistory = async (req, res) => {
     const rows = await GenerationHistory.sequelize.query(
       `
         WITH filtered AS (
-          SELECT id, COALESCE(link_id::text, id::text) AS key
+          SELECT id, COALESCE(token_hash, link_id::text, id::text) AS key
           FROM generation_history
           ${historySql}
         ),
@@ -640,7 +640,7 @@ adminController.listGenerationHistory = async (req, res) => {
     const totalRows = await GenerationHistory.sequelize.query(
       `
         WITH filtered AS (
-          SELECT id, COALESCE(link_id::text, id::text) AS key
+          SELECT id, COALESCE(token_hash, link_id::text, id::text) AS key
           FROM generation_history
           ${historySql}
         ),
@@ -819,7 +819,7 @@ adminController.metrics = async (req, res) => {
   const historyCountsRows = await GenerationHistory.sequelize.query(
     `
       WITH filtered AS (
-        SELECT COALESCE(link_id::text, id::text) AS key
+        SELECT COALESCE(token_hash, link_id::text, id::text) AS key
         FROM generation_history
         ${historySql}
       ),
@@ -1159,6 +1159,12 @@ adminController.exportScanHistory = async (req, res) => {
     "link_id",
     "client_ip",
     "user_agent",
+    "platform",
+    "language",
+    "screen",
+    "timezone",
+    "referrer",
+    "device",
     "is_duplicate",
     "created_at",
   ];
@@ -1170,6 +1176,12 @@ adminController.exportScanHistory = async (req, res) => {
     h.link_id,
     h.client_ip,
     h.user_agent,
+    h.platform,
+    h.language,
+    h.screen,
+    h.timezone,
+    h.referrer,
+    h.device,
     h.is_duplicate,
     h.created_at,
   ]);
@@ -1279,7 +1291,7 @@ adminController.rotateCompanyToken = async (req, res) => {
   const apiToken = companyService.generateApiToken();
   company.api_token = apiToken;
   company.api_token_prefix = apiToken.slice(0, 8);
-  await company.save();
+  await company.save({ allowApiTokenUpdate: true });
 
   return res.json({ api_token: apiToken });
 };

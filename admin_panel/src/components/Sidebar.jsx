@@ -9,7 +9,6 @@ const links = [
   { to: "/operations", label: "Операції", roles: ["admin"] },
   { to: "/history", label: "Історія", roles: ["superadmin", "admin", "manager", "viewer"] },
   { to: "/scans", label: "Сканування", roles: ["superadmin", "admin", "manager", "viewer"] },
-  { to: "/banks", label: "Банки", roles: ["superadmin", "admin", "manager", "viewer"] },
   { to: "/reports", label: "Звіти", roles: ["superadmin", "admin", "manager"] },
   { to: "/api", label: "API", roles: ["superadmin", "admin", "manager", "viewer"] },
   { to: "/users", label: "Адмін‑користувачі", roles: ["superadmin"] },

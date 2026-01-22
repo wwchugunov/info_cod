@@ -111,4 +111,19 @@ adminUsersController.resetPassword = async (req, res) => {
   return res.json({ message: "OK" });
 };
 
+adminUsersController.remove = async (req, res) => {
+  const userId = Number(req.params.id);
+  if (!Number.isFinite(userId)) {
+    return res.status(400).json({ message: "Некорректный ID" });
+  }
+  if (req.admin?.sub && Number(req.admin.sub) === userId) {
+    return res.status(400).json({ message: "Нельзя удалить текущего пользователя" });
+  }
+  const count = await AdminUser.destroy({ where: { id: userId } });
+  if (!count) {
+    return res.status(404).json({ message: "Пользователь не найден" });
+  }
+  return res.json({ ok: true });
+};
+
 module.exports = adminUsersController;

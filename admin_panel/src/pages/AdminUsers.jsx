@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import Topbar from "../components/Topbar";
+import useAdminInfo from "../hooks/useAdminInfo";
 
 export default function AdminUsers() {
   const [items, setItems] = useState([]);
@@ -15,6 +16,7 @@ export default function AdminUsers() {
   const [editing, setEditing] = useState(null);
   const [editForm, setEditForm] = useState(null);
   const [saving, setSaving] = useState(false);
+  const { role } = useAdminInfo();
 
   const load = () => {
     api.get("/admin/admin-users").then((res) => setItems(res.data || []));
@@ -51,6 +53,15 @@ export default function AdminUsers() {
     await api.patch(`/admin/admin-users/${user.id}`, {
       is_active: !user.is_active,
     });
+    load();
+  };
+
+  const removeUser = async (user) => {
+    const confirmed = window.confirm(
+      `Видалити користувача ${user.email || user.name || user.id}?`
+    );
+    if (!confirmed) return;
+    await api.delete(`/admin/admin-users/${user.id}`);
     load();
   };
 
@@ -197,6 +208,14 @@ export default function AdminUsers() {
                       <button className="button" onClick={() => openEdit(user)}>
                         Редагувати
                       </button>
+                      {role === "superadmin" ? (
+                        <button
+                          className="button danger"
+                          onClick={() => removeUser(user)}
+                        >
+                          Видалити
+                        </button>
+                      ) : null}
                     </div>
                   </td>
                 </tr>

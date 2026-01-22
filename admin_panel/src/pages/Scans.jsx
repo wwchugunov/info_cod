@@ -113,6 +113,9 @@ export default function Scans() {
                 <th>Платіж</th>
                 <th>Link ID</th>
                 <th>IP</th>
+                <th>Платформа</th>
+                <th>Пристрій</th>
+                <th>UA</th>
                 <th>Тип</th>
                 <th>Створено</th>
               </tr>
@@ -129,6 +132,11 @@ export default function Scans() {
                   <td>{h.payment_id || "—"}</td>
                   <td>{h.link_id || "—"}</td>
                   <td>{h.client_ip || "—"}</td>
+                  <td>{h.platform || "—"}</td>
+                  <td>{h.device || "—"}</td>
+                  <td style={{ maxWidth: 240, wordBreak: "break-all" }}>
+                    {h.user_agent || "—"}
+                  </td>
                   <td>
                     <span className="badge">
                       {h.is_duplicate ? "Повторне" : "Унікальне"}

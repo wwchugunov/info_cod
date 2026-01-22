@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Оплата онлайн</title>
+    <title> <%= company.name %></title>
     <link rel="stylesheet" href="/css/main.css">
 </head>
 
@@ -16,7 +16,6 @@
                 <h1 class="frame__title">
                     <%= company.name %>
                 </h1>
-                <p>Безпечно та швидко</p>
             </div>
         </div>
     </header>
@@ -68,14 +67,14 @@
 
             <!-- Кнопка оплаты -->
             <div class="pay-button">
-                <a href="<%= paymentUrl %>" class="pay-btn" id="pay-btn" data-nbu-url="<%= paymentUrl %>" data-nbu-code="<%= paymentCode %>">Оплатити</a>
+                <a href="<%= paymentUrl %>" class="pay-btn" id="pay-btn" data-link-id="<%= linkId %>" data-nbu-url="<%= paymentUrl %>" data-nbu-code="<%= paymentCode %>">Оплатити</a>
             </div>
 
             <!-- Кнопки банков -->
             <div class="bank-buttons" id="bankButtons">
                 <button class="bank-btn" data-bank="mono"><img src="/img/monobank-logo.png" alt="" width="50"> Сплатили Mono</button>
                 <button class="bank-btn" data-bank="privat24"><img src="/img/Privat24_Logo.png" alt="" width="50">Сплатили Privat</button>
-                <button class="bank-btn" data-bank="abank"><img src="/img/a-bank.png" alt="" width="50"> Сплатилиa-bank</button>
+                <button class="bank-btn" data-bank="abank"><img src="/img/a-bank.png" alt="" width="50"> Сплатити a-bank</button>
             </div>
 
             <!-- QR-код -->

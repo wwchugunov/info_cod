@@ -5,7 +5,6 @@ import Companies from "./pages/Companies";
 import Payments from "./pages/Payments";
 import History from "./pages/History";
 import Scans from "./pages/Scans";
-import BankHistory from "./pages/BankHistory";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
@@ -100,15 +99,6 @@ export default function App() {
             <RoleRoute
               roles={["superadmin", "admin", "manager", "viewer"]}
               element={<Scans />}
-            />
-          }
-        />
-        <Route
-          path="/banks"
-          element={
-            <RoleRoute
-              roles={["superadmin", "admin", "manager", "viewer"]}
-              element={<BankHistory />}
             />
           }
         />

@@ -99,6 +99,7 @@ router.get("/admin-users", requireAdmin(["superadmin"]), adminUsersController.li
 router.post("/admin-users", requireAdmin(["superadmin"]), adminUsersController.create);
 router.patch("/admin-users/:id", requireAdmin(["superadmin"]), adminUsersController.update);
 router.post("/admin-users/:id/reset-password", requireAdmin(["superadmin"]), adminUsersController.resetPassword);
+router.delete("/admin-users/:id", requireAdmin(["superadmin"]), adminUsersController.remove);
 
 router.get("/errors", requireAdmin(["superadmin"]), adminController.listErrors);
 router.get("/system-metrics", requireAdmin(["superadmin"]), adminController.listSystemMetrics);

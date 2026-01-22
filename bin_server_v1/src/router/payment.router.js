@@ -10,5 +10,7 @@ router.get('/payment', (req, res) => {
 });
 
 router.get('/payment/:linkId', paymentController.getPaymentByLink);
+router.post('/payment/:linkId/scan', paymentController.logScan);
+router.post('/payment/:linkId/bank', paymentController.logBank);
 
 module.exports = router;

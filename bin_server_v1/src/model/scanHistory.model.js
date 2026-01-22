@@ -11,6 +11,12 @@ const ScanHistory = sequelize.define(
     link_id: { type: DataTypes.UUID },
     client_ip: { type: DataTypes.STRING },
     user_agent: { type: DataTypes.TEXT },
+    platform: { type: DataTypes.STRING },
+    language: { type: DataTypes.STRING },
+    screen: { type: DataTypes.STRING },
+    timezone: { type: DataTypes.STRING },
+    referrer: { type: DataTypes.TEXT },
+    device: { type: DataTypes.STRING },
     is_duplicate: { type: DataTypes.BOOLEAN, defaultValue: false },
   },
   {

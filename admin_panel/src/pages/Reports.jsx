@@ -77,12 +77,11 @@ export default function Reports() {
       return items;
     };
 
-    const [companies, payments, history, scans, bankHistory] = await Promise.all([
+    const [companies, payments, history, scans] = await Promise.all([
       fetchAll("/admin/companies"),
       fetchAll("/admin/payments"),
       fetchAll("/admin/generation-history"),
       fetchAll("/admin/scan-history"),
-      fetchAll("/admin/bank-history"),
     ]);
 
     const wb = XLSX.utils.book_new();
@@ -90,13 +89,11 @@ export default function Reports() {
     const paymentsSheet = XLSX.utils.json_to_sheet(payments);
     const historySheet = XLSX.utils.json_to_sheet(history);
     const scansSheet = XLSX.utils.json_to_sheet(scans);
-    const bankSheet = XLSX.utils.json_to_sheet(bankHistory);
 
     XLSX.utils.book_append_sheet(wb, companiesSheet, "Companies");
     XLSX.utils.book_append_sheet(wb, paymentsSheet, "Payments");
     XLSX.utils.book_append_sheet(wb, historySheet, "History");
     XLSX.utils.book_append_sheet(wb, scansSheet, "Scans");
-    XLSX.utils.book_append_sheet(wb, bankSheet, "Banks");
 
     XLSX.writeFile(wb, "reports.xlsx", {
       bookType: "xlsx",
@@ -192,17 +189,6 @@ export default function Reports() {
           <button
             className="button"
             onClick={() => downloadCsv("/admin/export/scan-history.csv", "scan-history.csv")}
-            disabled={!canDownload}
-          >
-            Завантажити CSV
-          </button>
-        </div>
-        <div className="card">
-          <h3>Історія банків</h3>
-          <p style={{ color: "#6e6a67" }}>CSV вивантаження</p>
-          <button
-            className="button"
-            onClick={() => downloadCsv("/admin/export/bank-history.csv", "bank-history.csv")}
             disabled={!canDownload}
           >
             Завантажити CSV

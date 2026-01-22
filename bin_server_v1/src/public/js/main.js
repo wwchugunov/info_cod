@@ -7,6 +7,26 @@ document.addEventListener("DOMContentLoaded", () => {
   const isMobile = ua.includes("android") || ua.includes("iphone");
 
   const nbuUrl = payBtn ? payBtn.dataset.nbuUrl || "" : "";
+  const linkId = payBtn ? payBtn.dataset.linkId || "" : "";
+
+  const sendLog = (url, payload) => {
+    try {
+      const body = JSON.stringify(payload || {});
+      if (navigator.sendBeacon) {
+        const blob = new Blob([body], { type: "application/json" });
+        navigator.sendBeacon(url, blob);
+        return;
+      }
+      fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        keepalive: true,
+      }).catch(() => {});
+    } catch (err) {
+      // no-op
+    }
+  };
 
   if (isMobile && bankButtonsWrap) {
     bankButtonsWrap.style.display = "block";
@@ -23,12 +43,24 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const banks = {
-    mono: { android: "com.ftband.mono", ios: "mono" }, // моно 
-    privat24: { android: "ua.privatbank.ap24", ios: "privat24" }, // привват 
-    abank: { android: "ua.com.abank", ios: "abank24" },  //  абанк
-    pumb: { android: "com.fuib.android.spot.online", ios: "pumb" }, // привват 
-
+    mono: { name: "Monobank", android: "com.ftband.mono", ios: "mono" },
+    privat24: { name: "Privat24", android: "ua.privatbank.ap24", ios: "privat24" },
+    abank: { name: "A-Bank", android: "ua.com.abank", ios: "abank24" },
+    pumb: { name: "PUMB", android: "com.fuib.android.spot.online", ios: "pumb" },
   };
+
+  if (linkId) {
+    sendLog(`/payment/${linkId}/scan`, {
+      platform: navigator.platform || null,
+      language: navigator.language || null,
+      screen: screen
+        ? `${screen.width}x${screen.height}@${window.devicePixelRatio || 1}`
+        : null,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+      referrer: document.referrer || null,
+      device: isMobile ? "mobile" : "desktop",
+    });
+  }
 
   if (bankButtonsWrap && nbuUrl) {
     bankButtonsWrap.addEventListener("click", (event) => {
@@ -37,6 +69,21 @@ document.addEventListener("DOMContentLoaded", () => {
       const code = btn.dataset.bank;
       const bank = banks[code];
       if (!bank) return;
+
+      if (linkId) {
+        sendLog(`/payment/${linkId}/bank`, {
+          bank_short_name: code,
+          bank_name: bank.name || null,
+          bank_package_android: bank.android || null,
+          bank_package_ios: bank.ios || null,
+          platform: ua.includes("android")
+            ? "android"
+            : ua.includes("iphone")
+            ? "ios"
+            : "unknown",
+          action: "open_app",
+        });
+      }
 
       let link = nbuUrl;
       if (ua.includes("android")) {
@@ -53,3 +100,35 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+
+// ====== BANK BUTTONS (MOBILE) / QR (DESKTOP) ======
+(function () {
+  const bankButtons = document.getElementById("bankButtons");
+  const qrBox = document.getElementById("qrBox");
+  const payBtn = document.getElementById("pay-btn");
+
+  if (!bankButtons || !qrBox || !payBtn) return;
+
+  const ua = navigator.userAgent.toLowerCase();
+  const isMobile = /android|iphone|ipad|ipod/.test(ua);
+
+  if (isMobile) {
+    // 📱 ТЕЛЕФОН
+    bankButtons.style.display = "block";
+    qrBox.style.display = "none";
+  } else {
+    // 🖥 ПК
+    bankButtons.style.display = "none";
+    qrBox.style.display = "block";
+
+    const qrImg = qrBox.querySelector("img");
+    const nbuUrl = payBtn.dataset.nbuUrl;
+
+    if (qrImg && nbuUrl) {
+      qrImg.src =
+        "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" +
+        encodeURIComponent(nbuUrl);
+    }
+  }
+})();
