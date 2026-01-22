@@ -22,6 +22,11 @@ router.patch(
 router.post("/auth/register", requireAdmin(["superadmin"]), adminAuthController.register);
 
 router.get("/companies", requireAdmin(["superadmin", "admin", "manager"]), adminController.listCompanies);
+router.get(
+  "/companies/tokens",
+  requireAdmin(["superadmin", "admin", "manager", "viewer"]),
+  adminController.listCompanyTokens
+);
 router.post(
   "/companies",
   requireAdmin(["superadmin", "admin", "manager", "viewer"]),
@@ -64,6 +69,11 @@ router.get(
   adminController.listBankHistory
 );
 router.get(
+  "/history",
+  requireAdmin(["superadmin", "admin", "manager", "viewer"]),
+  adminController.listHistory
+);
+router.get(
   "/metrics",
   requireAdmin(["superadmin", "admin", "manager", "viewer"]),
   adminController.metrics
@@ -100,6 +110,11 @@ router.get(
   adminController.exportBankHistory
 );
 
+router.get(
+  "/companies/:id/token",
+  requireAdmin(["superadmin", "admin", "manager", "viewer"]),
+  adminController.getCompanyToken
+);
 router.post(
   "/companies/:id/token",
   requireAdmin(["superadmin", "admin", "manager", "viewer"]),

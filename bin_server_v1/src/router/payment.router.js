@@ -4,6 +4,12 @@ const paymentController = require('../controller/payment.controller');
 const authToken = require('../middleware/authToken.middleware');
 
 router.post('/generate', authToken, paymentController.generatePayment);
+router.all('/generate', (req, res) => {
+  return res.status(405).json({
+    message: "Неправильный тип запроса",
+    allowed: ["POST"],
+  });
+});
 
 router.get('/payment', (req, res) => {
   res.render('no-payment');

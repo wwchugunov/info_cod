@@ -14,13 +14,18 @@ const {
   recordRequestMetrics,
   startSystemMetricsSampler,
 } = require("./admin/service/systemMetrics.service");
-const host = process.env.HOST || '127.0.0.1';
-const port = Number(process.env.PORT) || 5050;
+const host = process.env.HOST || undefined;
+const port = Number(process.env.PORT);
 const paymentRouter = require('./router/payment.router.js');
 const { error } = require('console');
 
 
 const app = express();
+const trustProxy = process.env.TRUST_PROXY;
+app.set(
+  "trust proxy",
+  trustProxy === "true" ? true : trustProxy || "loopback, linklocal, uniquelocal"
+);
 
 process.on("unhandledRejection", (reason) => {
   logError({
@@ -99,6 +104,13 @@ app.get('/', (req, res) => {
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 app.use('/api', router);
+app.use('/api', (req, res) => {
+  res.status(404).json({
+    message: "Неправильный тип запроса или путь",
+    method: req.method,
+    path: req.originalUrl,
+  });
+});
 app.use('/', paymentRouter);
 app.use((err, req, res, next) => {
   res.locals.errorLogged = true;
@@ -129,7 +141,11 @@ const start = async () => {
     startSystemMetricsSampler({ intervalMs: 10000 });
     const server = http.createServer(app);
     server.listen(port, host, () => {
-      console.log(`Server running on http://${host}:${port}`);
+      if (host) {
+        console.log(`Server running on http://${host}:${port}`);
+      } else {
+        console.log(`Server running on port ${port}`);
+      }
     });
   } catch (error) {
     console.error('Ошибка при старте сервера:', error.message);

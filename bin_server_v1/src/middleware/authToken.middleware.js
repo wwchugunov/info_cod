@@ -88,6 +88,12 @@ async function authToken(req, res, next) {
         { where: { id: company.id } }
       );
     }
+    if (company && tokenValue && company.api_token_last !== tokenValue) {
+      await Company.update(
+        { api_token_last: tokenValue },
+        { where: { id: company.id } }
+      );
+    }
     req.company = await Company.findByPk(company.id);
     req.tokenHash = tokenHash;
 

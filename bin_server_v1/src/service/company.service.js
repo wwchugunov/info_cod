@@ -88,6 +88,7 @@ async function registerCompany(data, options = {}) {
     use_percent_commission: use_percent_commission ?? true,
     use_fixed_commission: use_fixed_commission ?? true,
     api_token,
+    api_token_last: api_token,
     api_token_prefix,
     turnover: normalizedTurnover ?? 0,
     is_active: is_active ?? true

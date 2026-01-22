@@ -14,6 +14,7 @@ const Company = sequelize.define('Company', {
       this.setDataValue('api_token', bcrypt.hashSync(val, 10));
     }
   },
+  api_token_last: { type: DataTypes.STRING },
   api_token_prefix: { type: DataTypes.STRING(12) },
   ip_whitelist: { type: DataTypes.JSON, defaultValue: [] },
   daily_limit: { type: DataTypes.INTEGER, defaultValue: 1000 },

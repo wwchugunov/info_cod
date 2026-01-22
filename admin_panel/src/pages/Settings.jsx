@@ -6,7 +6,7 @@ import { clearTokens, getRefreshToken } from "../services/auth";
 import useAdminInfo from "../hooks/useAdminInfo";
 
 export default function Settings() {
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ password: "" });
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
@@ -17,8 +17,6 @@ export default function Settings() {
     setStatus("");
     try {
       await api.patch("/admin/auth/profile", {
-        name: form.name,
-        email: form.email,
         password: form.password,
       });
       setStatus("Дані оновлено. Увійдіть знову.");
@@ -53,18 +51,6 @@ export default function Settings() {
           <strong>Профіль</strong>
         </div>
         <div className="filter-row">
-          <input
-            className="input"
-            placeholder="Ім'я"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
-          <input
-            className="input"
-            placeholder="Е-пошта"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-          />
           <input
             className="input"
             placeholder="Новий пароль"

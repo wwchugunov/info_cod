@@ -21,4 +21,10 @@ function toCsv(headers, rows, options = {}) {
   return allLines.join("\n");
 }
 
-module.exports = { toCsv };
+function toCsvBuffer(headers, rows, options = {}) {
+  const encoding = options.encoding || "utf16le";
+  const csv = `\ufeff${toCsv(headers, rows, options)}`;
+  return Buffer.from(csv, encoding);
+}
+
+module.exports = { toCsv, toCsvBuffer };

@@ -99,7 +99,10 @@ paymentController.getPaymentByLink = async (req, res) => {
       amount: finalAmount,
       purpose: payment.purpose,
     });
-    const paymentUrl = `https://bank.gov.ua/qr/${paymentCode}`;
+    const bankQrBase = process.env.BANK_QR_BASE || "";
+    const paymentUrl = bankQrBase
+      ? `${bankQrBase.replace(/\/+$/, "")}/${paymentCode}`
+      : paymentCode;
 
     res.render("payment", {
       linkId: payment.link_id,

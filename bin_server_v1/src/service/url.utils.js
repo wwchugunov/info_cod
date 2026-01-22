@@ -7,11 +7,14 @@ function getBaseUrl() {
     return normalizeBaseUrl(process.env.BASE_URL);
   }
 
-  const domain = process.env.DOMEN || "infokod.com.ua";
+  const domain = String(process.env.DOMEN || "").trim();
+  if (!domain) {
+    return "";
+  }
   const hasProtocol = /^https?:\/\//i.test(domain);
-  const protocol = hasProtocol ? "" : "http://";
+  const protocol = hasProtocol ? "" : String(process.env.BASE_PROTOCOL || "");
   const port = process.env.PORT;
-  const base = hasProtocol ? domain : `${protocol}${domain}`;
+  const base = hasProtocol || !protocol ? domain : `${protocol}://${domain}`;
 
   if (port && !["80", "443"].includes(String(port))) {
     return normalizeBaseUrl(`${base}:${port}`);
@@ -21,7 +24,11 @@ function getBaseUrl() {
 }
 
 function buildPaymentLink(linkId) {
-  return `${getBaseUrl()}/api/payment/payment/${linkId}`;
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) {
+    return `/api/payment/payment/${linkId}`;
+  }
+  return `${baseUrl}/api/payment/payment/${linkId}`;
 }
 
 module.exports = { getBaseUrl, buildPaymentLink };

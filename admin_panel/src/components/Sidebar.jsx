@@ -6,7 +6,7 @@ const links = [
   { to: "/dashboard", label: "Дашборд", roles: ["superadmin", "manager"] },
   { to: "/companies", label: "Компанії", roles: ["superadmin", "admin", "manager"] },
   { to: "/payments", label: "Платежі", roles: ["superadmin", "manager", "viewer"] },
-  { to: "/operations", label: "Операції", roles: ["admin"] },
+  { to: "/operations", label: "Генерації", roles: ["admin"] },
   { to: "/history", label: "Історія", roles: ["superadmin", "admin", "manager", "viewer"] },
   { to: "/scans", label: "Сканування", roles: ["superadmin", "admin", "manager", "viewer"] },
   { to: "/reports", label: "Звіти", roles: ["superadmin", "admin", "manager"] },
@@ -19,6 +19,7 @@ const links = [
 
 export default function Sidebar() {
   const { role, email } = useAdminInfo();
+  const brandLabel = import.meta.env.VITE_APP_BRAND || "—";
   const roleLabel = {
     viewer: "Перегляд",
     manager: "Менеджер",
@@ -28,7 +29,7 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="brand">info cod</div>
+      <div className="brand">{brandLabel}</div>
       <nav className="nav">
         {links
           .filter((link) => hasRole(role, link.roles))

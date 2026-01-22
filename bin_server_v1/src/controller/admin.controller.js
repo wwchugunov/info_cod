@@ -7,7 +7,7 @@ const BankHistory = require("../model/bankHistory.model");
 const AdminUser = require("../admin/model/adminUser.model");
 const bcrypt = require("bcrypt");
 const crypto = require("crypto");
-const { toCsv } = require("../service/csv.utils");
+const { toCsvBuffer } = require("../service/csv.utils");
 const companyService = require("../service/company.service");
 const { calculateCommission, getDayRange } = require("../service/payment.utils");
 const ErrorLog = require("../admin/model/errorLog.model");
@@ -193,6 +193,7 @@ adminController.listCompanies = async (req, res) => {
   const searchNumber = Number(search);
 
   const where = {};
+  const scopeWhere = {};
   const adminCompanyId = getAdminCompanyId(req);
   if (adminCompanyId) {
     const adminCompany = await Company.findByPk(adminCompanyId, {
@@ -202,11 +203,12 @@ adminController.listCompanies = async (req, res) => {
       return res.status(403).json({ message: "Недостаточно прав" });
     }
     if (adminCompany.edrpo) {
-      where.edrpo = adminCompany.edrpo;
+      scopeWhere.edrpo = adminCompany.edrpo;
     } else {
-      where.id = adminCompanyId;
+      scopeWhere.id = adminCompanyId;
     }
   }
+  Object.assign(where, scopeWhere);
   if (search) {
     const conditions = [
       { name: { [Op.iLike]: `%${search}%` } },
@@ -218,6 +220,13 @@ adminController.listCompanies = async (req, res) => {
     ];
     if (Number.isFinite(searchNumber)) {
       conditions.push({ id: searchNumber });
+      const searchCompany = await Company.findOne({
+        attributes: ["edrpo"],
+        where: { ...scopeWhere, id: searchNumber },
+      });
+      if (searchCompany?.edrpo) {
+        conditions.push({ edrpo: searchCompany.edrpo });
+      }
     }
     where[Op.or] = conditions;
   }
@@ -738,6 +747,221 @@ adminController.listScanHistory = async (req, res) => {
   });
 };
 
+adminController.listHistory = async (req, res) => {
+  const { page, limit, offset } = parsePagination(req.query);
+  const adminCompanyId = getAdminCompanyId(req);
+  const companyId = Number(req.query.company_id);
+  const companyIds = await getCompanyScope(
+    adminCompanyId,
+    Number.isFinite(companyId) ? companyId : null
+  );
+  const type = String(req.query.type || "").trim();
+
+  const baseClauses = [];
+  const replacements = { limit, offset };
+  const from = req.query.from ? new Date(req.query.from) : null;
+  const to = req.query.to ? new Date(req.query.to) : null;
+
+  if (from && !Number.isNaN(from.getTime())) {
+    baseClauses.push("created_at >= :from");
+    replacements.from = from;
+  }
+  if (to && !Number.isNaN(to.getTime())) {
+    baseClauses.push("created_at <= :to");
+    replacements.to = to;
+  }
+  if (companyIds && companyIds.length) {
+    if (companyIds.length === 1) {
+      baseClauses.push("company_id = :company_id");
+      replacements.company_id = companyIds[0];
+    } else {
+      baseClauses.push("company_id = ANY(:company_ids)");
+      replacements.company_ids = companyIds;
+    }
+  } else if (adminCompanyId) {
+    baseClauses.push("company_id = :company_id");
+    replacements.company_id = adminCompanyId;
+  } else if (Number.isFinite(companyId)) {
+    baseClauses.push("company_id = :company_id");
+    replacements.company_id = companyId;
+  }
+
+  const generationClauses = [...baseClauses];
+  if (req.query.status) {
+    generationClauses.push("status = :status");
+    replacements.status = String(req.query.status);
+  }
+
+  const baseWhere = baseClauses.length ? `WHERE ${baseClauses.join(" AND ")}` : "";
+  const generationWhere = generationClauses.length
+    ? `WHERE ${generationClauses.join(" AND ")}`
+    : "";
+
+  const connection = GenerationHistory.sequelize;
+
+  if (type === "generation") {
+    const items = await connection.query(
+      `
+        SELECT
+          'generation'::text AS kind,
+          id,
+          company_id,
+          company_name,
+          amount,
+          commission_percent,
+          commission_fixed,
+          final_amount,
+          purpose,
+          link_id,
+          client_ip,
+          user_agent,
+          status,
+          error_code,
+          error_message,
+          NULL::boolean AS is_duplicate,
+          NULL::text AS platform,
+          NULL::text AS device,
+          NULL::text AS language,
+          created_at
+        FROM generation_history
+        ${generationWhere}
+        ORDER BY created_at DESC
+        LIMIT :limit OFFSET :offset;
+      `,
+      { replacements, type: QueryTypes.SELECT }
+    );
+    const countRows = await connection.query(
+      `SELECT COUNT(*)::int AS count FROM generation_history ${generationWhere};`,
+      { replacements, type: QueryTypes.SELECT }
+    );
+    return res.json({
+      page,
+      limit,
+      total: Number(countRows[0]?.count || 0),
+      items,
+    });
+  }
+
+  if (type === "scan") {
+    const items = await connection.query(
+      `
+        SELECT
+          'scan'::text AS kind,
+          id,
+          company_id,
+          company_name,
+          NULL::numeric AS amount,
+          NULL::numeric AS commission_percent,
+          NULL::numeric AS commission_fixed,
+          NULL::numeric AS final_amount,
+          NULL::text AS purpose,
+          link_id,
+          client_ip,
+          user_agent,
+          NULL::text AS status,
+          NULL::text AS error_code,
+          NULL::text AS error_message,
+          is_duplicate,
+          platform,
+          device,
+          language,
+          created_at
+        FROM scan_history
+        ${baseWhere}
+        ORDER BY created_at DESC
+        LIMIT :limit OFFSET :offset;
+      `,
+      { replacements, type: QueryTypes.SELECT }
+    );
+    const countRows = await connection.query(
+      `SELECT COUNT(*)::int AS count FROM scan_history ${baseWhere};`,
+      { replacements, type: QueryTypes.SELECT }
+    );
+    return res.json({
+      page,
+      limit,
+      total: Number(countRows[0]?.count || 0),
+      items,
+    });
+  }
+
+  const countRows = await connection.query(
+    `
+      SELECT COUNT(*)::int AS count
+      FROM (
+        SELECT id FROM generation_history ${generationWhere}
+        UNION ALL
+        SELECT id FROM scan_history ${baseWhere}
+      ) AS combined;
+    `,
+    { replacements, type: QueryTypes.SELECT }
+  );
+  const items = await connection.query(
+    `
+      SELECT *
+      FROM (
+        SELECT
+          'generation'::text AS kind,
+          id,
+          company_id,
+          company_name,
+          amount,
+          commission_percent,
+          commission_fixed,
+          final_amount,
+          purpose,
+          link_id,
+          client_ip,
+          user_agent,
+          status,
+          error_code,
+          error_message,
+          NULL::boolean AS is_duplicate,
+          NULL::text AS platform,
+          NULL::text AS device,
+          NULL::text AS language,
+          created_at
+        FROM generation_history
+        ${generationWhere}
+        UNION ALL
+        SELECT
+          'scan'::text AS kind,
+          id,
+          company_id,
+          company_name,
+          NULL::numeric AS amount,
+          NULL::numeric AS commission_percent,
+          NULL::numeric AS commission_fixed,
+          NULL::numeric AS final_amount,
+          NULL::text AS purpose,
+          link_id,
+          client_ip,
+          user_agent,
+          NULL::text AS status,
+          NULL::text AS error_code,
+          NULL::text AS error_message,
+          is_duplicate,
+          platform,
+          device,
+          language,
+          created_at
+        FROM scan_history
+        ${baseWhere}
+      ) AS combined
+      ORDER BY created_at DESC
+      LIMIT :limit OFFSET :offset;
+    `,
+    { replacements, type: QueryTypes.SELECT }
+  );
+
+  return res.json({
+    page,
+    limit,
+    total: Number(countRows[0]?.count || 0),
+    items,
+  });
+};
+
 adminController.listBankHistory = async (req, res) => {
   const { page, limit, offset } = parsePagination(req.query);
   const where = buildDateRange(req.query, "created_at");
@@ -994,8 +1218,8 @@ adminController.exportCompanies = async (req, res) => {
     c.is_active,
     c.created_at,
   ]);
-  const csv = `\ufeff${toCsv(headers, rows)}`;
-  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  const csv = toCsvBuffer(headers, rows);
+  res.setHeader("Content-Type", "text/csv; charset=utf-16le");
   res.setHeader("Content-Disposition", "attachment; filename=\"companies.csv\"");
   return res.send(csv);
 };
@@ -1052,8 +1276,8 @@ adminController.exportPayments = async (req, res) => {
     p.created_at,
     p.expires_at,
   ]);
-  const csv = `\ufeff${toCsv(headers, rows)}`;
-  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  const csv = toCsvBuffer(headers, rows);
+  res.setHeader("Content-Type", "text/csv; charset=utf-16le");
   res.setHeader("Content-Disposition", "attachment; filename=\"payments.csv\"");
   return res.send(csv);
 };
@@ -1121,8 +1345,8 @@ adminController.exportGenerationHistory = async (req, res) => {
     h.error_code,
     h.error_message,
   ]);
-  const csv = `\ufeff${toCsv(headers, rows)}`;
-  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  const csv = toCsvBuffer(headers, rows);
+  res.setHeader("Content-Type", "text/csv; charset=utf-16le");
   res.setHeader("Content-Disposition", "attachment; filename=\"generation-history.csv\"");
   return res.send(csv);
 };
@@ -1190,8 +1414,8 @@ adminController.exportScanHistory = async (req, res) => {
     h.is_duplicate,
     h.created_at,
   ]);
-  const csv = `\ufeff${toCsv(headers, rows)}`;
-  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  const csv = toCsvBuffer(headers, rows);
+  res.setHeader("Content-Type", "text/csv; charset=utf-16le");
   res.setHeader("Content-Disposition", "attachment; filename=\"scan-history.csv\"");
   return res.send(csv);
 };
@@ -1255,8 +1479,8 @@ adminController.exportBankHistory = async (req, res) => {
     h.user_agent,
     h.created_at,
   ]);
-  const csv = `\ufeff${toCsv(headers, rows)}`;
-  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  const csv = toCsvBuffer(headers, rows);
+  res.setHeader("Content-Type", "text/csv; charset=utf-16le");
   res.setHeader("Content-Disposition", "attachment; filename=\"bank-history.csv\"");
   return res.send(csv);
 };
@@ -1295,10 +1519,54 @@ adminController.rotateCompanyToken = async (req, res) => {
   }
   const apiToken = companyService.generateApiToken();
   company.api_token = apiToken;
+  company.api_token_last = apiToken;
   company.api_token_prefix = apiToken.slice(0, 8);
   await company.save({ allowApiTokenUpdate: true });
 
   return res.json({ api_token: apiToken });
+};
+
+adminController.getCompanyToken = async (req, res) => {
+  const adminCompanyId = getAdminCompanyId(req);
+  const companyId = Number(req.params.id);
+  if (!Number.isFinite(companyId)) {
+    return res.status(400).json({ message: "Некорректный ID компании" });
+  }
+  if (adminCompanyId && !(await canAccessCompany(adminCompanyId, companyId))) {
+    return res.status(403).json({ message: "Недостаточно прав" });
+  }
+  const company = await Company.findByPk(companyId, {
+    attributes: ["id", "api_token_last"],
+  });
+  if (!company) {
+    return res.status(404).json({ message: "Компания не найдена" });
+  }
+  return res.json({ api_token: company.api_token_last || null });
+};
+
+adminController.listCompanyTokens = async (req, res) => {
+  const adminCompanyId = getAdminCompanyId(req);
+  const companyIds = await getCompanyScope(adminCompanyId, null);
+  const where = {};
+  if (companyIds && companyIds.length) {
+    where.id = companyIds;
+  } else if (adminCompanyId) {
+    where.id = adminCompanyId;
+  }
+
+  const companies = await Company.findAll({
+    where,
+    attributes: ["id", "name", "api_token_last"],
+    order: [["id", "ASC"]],
+  });
+
+  return res.json({
+    items: companies.map((company) => ({
+      id: company.id,
+      name: company.name,
+      api_token: company.api_token_last || null,
+    })),
+  });
 };
 
 adminController.createCompanyAdmin = async (req, res) => {

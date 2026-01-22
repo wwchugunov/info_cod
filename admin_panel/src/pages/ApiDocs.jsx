@@ -1,18 +1,57 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Topbar from "../components/Topbar";
 import api from "../services/api";
 import useAdminInfo from "../hooks/useAdminInfo";
 
 export default function ApiDocs() {
   const { role, company_id, permissions = {} } = useAdminInfo();
-  const [companyId, setCompanyId] = useState(
-    company_id ? String(company_id) : ""
-  );
+  const [companyId, setCompanyId] = useState("");
   const [token, setToken] = useState("");
+  const [tokens, setTokens] = useState([]);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const didPrefillRef = useRef(false);
+  const apiBase = import.meta.env.VITE_API_BASE || "/api";
+  const publicBase = import.meta.env.VITE_PUBLIC_BASE_URL || window.location.origin;
+  const paymentPageUrl = `${publicBase}${apiBase}/payment/payment/<TOKEN>`;
 
   const canRotate = role === "superadmin" || Boolean(permissions.token_generate);
+
+  const loadToken = async (id) => {
+    if (!id) return;
+    try {
+      const res = await api.get(`/admin/companies/${id}/token`);
+      setToken(res.data.api_token || "");
+    } catch (err) {
+      setToken("");
+    }
+  };
+
+  const loadTokens = async () => {
+    try {
+      const res = await api.get("/admin/companies/tokens");
+      setTokens(res.data.items || []);
+    } catch (err) {
+      setTokens([]);
+    }
+  };
+
+  useEffect(() => {
+    if (company_id && !didPrefillRef.current) {
+      setCompanyId(String(company_id));
+      didPrefillRef.current = true;
+    }
+  }, [company_id]);
+
+  useEffect(() => {
+    if (companyId) {
+      loadToken(companyId);
+    }
+  }, [companyId]);
+
+  useEffect(() => {
+    loadTokens();
+  }, []);
 
   const rotateToken = async () => {
     if (!companyId) {
@@ -25,6 +64,7 @@ export default function ApiDocs() {
       const res = await api.post(`/admin/companies/${companyId}/token`);
       setToken(res.data.api_token || "");
       setStatus("Новий токен згенеровано. Збережіть його.");
+      loadTokens();
     } catch (err) {
       const message =
         err?.response?.data?.message || "Не вдалося згенерувати токен";
@@ -57,7 +97,40 @@ export default function ApiDocs() {
             {loading ? "Генерація..." : "Згенерувати токен"}
           </button>
         </div>
-        {token ? (
+        {tokens.length > 1 ? (
+          <div className="card-grid" style={{ marginTop: 12 }}>
+            {tokens.map((item) => (
+              <div className="card" key={item.id}>
+                <h3>
+                  {item.name || "Компанія"} #{item.id}
+                </h3>
+                <div
+                  style={{
+                    background: "#f6f2ea",
+                    padding: "12px 14px",
+                    borderRadius: 12,
+                    wordBreak: "break-all",
+                    fontFamily: "monospace",
+                    color: "#1c1a19",
+                    marginTop: 8,
+                  }}
+                >
+                  {item.api_token || "—"}
+                </div>
+                <button
+                  className="button secondary"
+                  style={{ marginTop: 8 }}
+                  onClick={() =>
+                    navigator.clipboard?.writeText(item.api_token || "")
+                  }
+                  disabled={!item.api_token}
+                >
+                  Скопіювати
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (tokens[0]?.api_token || token) ? (
           <div
             style={{
               background: "#f6f2ea",
@@ -69,7 +142,16 @@ export default function ApiDocs() {
               marginTop: 8,
             }}
           >
-            {token}
+            {tokens[0]?.api_token || token}
+            <button
+              className="button secondary"
+              style={{ marginTop: 8 }}
+              onClick={() =>
+                navigator.clipboard?.writeText(tokens[0]?.api_token || token)
+              }
+            >
+              Скопіювати
+            </button>
           </div>
         ) : null}
         {status ? <p className="form-hint">{status}</p> : null}
@@ -97,14 +179,14 @@ export default function ApiDocs() {
           <strong> Authorization: Bearer TOKEN</strong>.
         </p>
         <p style={{ color: "#6e6a67" }}>
-          Базовий URL: <strong>/api</strong>.
+          Базовий URL: <strong>{apiBase}</strong>.
         </p>
         <div
           className="card-grid"
           style={{ marginTop: 12, gridTemplateColumns: "1fr" }}
         >
           <div className="card">
-            <h3>POST /api/payment/generate</h3>
+            <h3>POST {apiBase}/payment/generate</h3>
             <p style={{ color: "#6e6a67" }}>
               Створює платіжне посилання та QR. Потрібен токен компанії в
               заголовку Authorization. Нижче — повний приклад запиту, який можна
@@ -121,7 +203,7 @@ export default function ApiDocs() {
               }}
             >
               {`Request:
-POST /api/payment/generate
+POST ${apiBase}/payment/generate
 
 Headers:
 Authorization: Bearer TOKEN
@@ -164,7 +246,7 @@ Body:
     "commissionPercent": 0,
     "commissionFixed": 0,
     "finalAmount": 1,
-    "linkId": "http://infokod.com.ua/api/payment/payment/<TOKEN>",
+    "linkId": "${paymentPageUrl}",
     "qr_link": "<TOKEN>",
     "qrlink": "NBU_TOKEN"
   }
@@ -194,7 +276,7 @@ Body:
               }}
             >
               {`Сторінка оплати:
-https://infokod.com.ua/api/payment/payment/<TOKEN>`}
+${paymentPageUrl}`}
             </div>
           </div>
         </div>

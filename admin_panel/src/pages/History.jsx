@@ -3,7 +3,11 @@ import api from "../services/api";
 import Topbar from "../components/Topbar";
 import { formatDateTime } from "../utils/date";
 
-export default function History() {
+export default function History({
+  title = "Історія",
+  subtitle = "Сканування та генерації",
+  fixedType = "",
+}) {
   const [items, setItems] = useState([]);
   const [filters, setFilters] = useState({
     company_id: "",
@@ -11,48 +15,39 @@ export default function History() {
     to: "",
     status: "",
   });
-  const [typeFilter, setTypeFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState(fixedType);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [uniqueCount, setUniqueCount] = useState(0);
-  const [duplicateCount, setDuplicateCount] = useState(0);
   const limit = 50;
   const totalPages = total ? Math.ceil(total / limit) : 1;
   const formatMoney = (value) => Number(value || 0).toFixed(2);
-  const sumCommission = (item) =>
-    Number(item.commission_percent || 0) + Number(item.commission_fixed || 0);
   const statusLabels = {
     success: "Успішно",
     failed: "Помилка",
   };
   const formatStatus = (status) => statusLabels[status] || status || "—";
+  const effectiveType = fixedType || typeFilter;
 
   const buildParams = () => {
     const base = Object.fromEntries(
       Object.entries({ ...filters, page, limit }).filter(([, value]) => value)
     );
-    if (typeFilter === "unique") {
-      base.is_duplicate = "false";
-    } else if (typeFilter === "duplicate") {
-      base.is_duplicate = "true";
+    if (effectiveType) {
+      base.type = effectiveType;
     }
     return base;
   };
 
   const load = () => {
     api
-      .get("/admin/generation-history", { params: buildParams() })
+      .get("/admin/history", { params: buildParams() })
       .then((res) => {
         setItems(res.data.items || []);
         setTotal(res.data.total || 0);
-        setUniqueCount(res.data.unique_count || 0);
-        setDuplicateCount(res.data.duplicate_count || 0);
       })
       .catch(() => {
         setItems([]);
         setTotal(0);
-        setUniqueCount(0);
-        setDuplicateCount(0);
       });
   };
 
@@ -70,7 +65,7 @@ export default function History() {
 
   return (
     <div className="main-area">
-      <Topbar title="Історія" subtitle="Логи генерацій" />
+      <Topbar title={title} subtitle={subtitle} />
       <div className="section">
         <div className="filter-row">
           <input
@@ -93,36 +88,40 @@ export default function History() {
             value={filters.to}
             onChange={(e) => setFilters({ ...filters, to: e.target.value })}
           />
-          <select
-            className="input"
-            value={filters.status}
-            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-          >
-            <option value="">Усі статуси</option>
-            <option value="success">Успішні</option>
-            <option value="failed">Помилки</option>
-          </select>
-          <select
-            className="input"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-          >
-            <option value="">Усі операції</option>
-            <option value="unique">Унікальні</option>
-            <option value="duplicate">Повторні</option>
-          </select>
+          {effectiveType !== "scan" ? (
+            <select
+              className="input"
+              value={filters.status}
+              onChange={(e) =>
+                setFilters({ ...filters, status: e.target.value })
+              }
+            >
+              <option value="">Усі статуси</option>
+              <option value="success">Успішні</option>
+              <option value="failed">Помилки</option>
+            </select>
+          ) : null}
+          {!fixedType ? (
+            <select
+              className="input"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+            >
+              <option value="">Усі події</option>
+              <option value="generation">Генерації</option>
+              <option value="scan">Сканування</option>
+            </select>
+          ) : null}
           <button className="button" onClick={applyFilters}>
             Застосувати
           </button>
-        </div>
-        <div style={{ marginBottom: 8, color: "#6e6a67" }}>
-          Унікальних операцій: {uniqueCount} • Повторних: {duplicateCount}
         </div>
         <div className="table-wrap">
           <table className="table">
             <thead>
               <tr>
                 <th>ID</th>
+                <th>Тип</th>
                 <th>Компанія</th>
                 <th>Сума</th>
                 <th>Комісія</th>
@@ -134,23 +133,33 @@ export default function History() {
             </thead>
             <tbody>
               {items.map((h) => {
-                const commission = sumCommission(h);
+                const commission =
+                  Number(h.commission_percent || 0) +
+                  Number(h.commission_fixed || 0);
                 const total = Number(h.amount || 0) + commission;
+                const isScan = h.kind === "scan";
+                const typeLabel = isScan ? "Сканування" : "Генерація";
+                const statusLabel = isScan
+                  ? h.is_duplicate
+                    ? "Повторне"
+                    : "Унікальне"
+                  : formatStatus(h.status);
                 return (
                   <tr key={h.id}>
                     <td>{h.id}</td>
+                    <td>{typeLabel}</td>
                     <td>
                       {h.company_name
                         ? `${h.company_name} (#${h.company_id})`
                         : h.company_id}
                     </td>
-                    <td>{formatMoney(h.amount)}</td>
-                    <td>{formatMoney(commission)}</td>
-                    <td>{formatMoney(total)}</td>
+                    <td>{isScan ? "—" : formatMoney(h.amount)}</td>
+                    <td>{isScan ? "—" : formatMoney(commission)}</td>
+                    <td>{isScan ? "—" : formatMoney(total)}</td>
                     <td>
-                      <span className="badge">{formatStatus(h.status)}</span>
+                      <span className="badge">{statusLabel}</span>
                     </td>
-                    <td>{h.error_message || h.error_code || "—"}</td>
+                    <td>{isScan ? "—" : h.error_message || h.error_code || "—"}</td>
                     <td>{formatDateTime(h.created_at || h.createdAt)}</td>
                   </tr>
                 );
