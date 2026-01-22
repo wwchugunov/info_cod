@@ -27,6 +27,7 @@ export default function History({
   };
   const formatStatus = (status) => statusLabels[status] || status || "—";
   const effectiveType = fixedType || typeFilter;
+  const showType = !fixedType;
 
   const buildParams = () => {
     const base = Object.fromEntries(
@@ -121,7 +122,7 @@ export default function History({
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Тип</th>
+                {showType ? <th>Тип</th> : null}
                 <th>Компанія</th>
                 <th>Сума</th>
                 <th>Комісія</th>
@@ -144,10 +145,19 @@ export default function History({
                     ? "Повторне"
                     : "Унікальне"
                   : formatStatus(h.status);
+                const badgeClass = isScan
+                  ? h.is_duplicate
+                    ? "badge badge-warning"
+                    : "badge badge-success"
+                  : h.status === "failed"
+                    ? "badge badge-danger"
+                    : h.status === "success"
+                      ? "badge badge-success"
+                      : "badge badge-neutral";
                 return (
                   <tr key={h.id}>
                     <td>{h.id}</td>
-                    <td>{typeLabel}</td>
+                    {showType ? <td>{typeLabel}</td> : null}
                     <td>
                       {h.company_name
                         ? `${h.company_name} (#${h.company_id})`
@@ -157,7 +167,7 @@ export default function History({
                     <td>{isScan ? "—" : formatMoney(commission)}</td>
                     <td>{isScan ? "—" : formatMoney(total)}</td>
                     <td>
-                      <span className="badge">{statusLabel}</span>
+                      <span className={badgeClass}>{statusLabel}</span>
                     </td>
                     <td>{isScan ? "—" : h.error_message || h.error_code || "—"}</td>
                     <td>{formatDateTime(h.created_at || h.createdAt)}</td>

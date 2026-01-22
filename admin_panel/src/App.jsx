@@ -71,7 +71,13 @@ export default function App() {
           element={
             <RoleRoute
               roles={["superadmin", "manager", "viewer"]}
-              element={<Payments />}
+              element={
+                <History
+                  title="Генерації"
+                  subtitle="Усі генерації"
+                  fixedType="generation"
+                />
+              }
             />
           }
         />

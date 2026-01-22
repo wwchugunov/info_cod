@@ -213,6 +213,26 @@ a {
   color: #0f8b8d;
 }
 
+.badge-success {
+  background: rgba(34, 139, 34, 0.14);
+  color: #1d7a1d;
+}
+
+.badge-warning {
+  background: rgba(255, 170, 0, 0.18);
+  color: #a86100;
+}
+
+.badge-danger {
+  background: rgba(220, 53, 69, 0.16);
+  color: #b62a37;
+}
+
+.badge-neutral {
+  background: rgba(110, 106, 103, 0.12);
+  color: #6e6a67;
+}
+
 .cell-stack {
   display: flex;
   flex-direction: column;

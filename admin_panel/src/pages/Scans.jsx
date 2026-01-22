@@ -134,7 +134,11 @@ export default function Scans() {
                     {h.user_agent || "—"}
                   </td>
                   <td>
-                    <span className="badge">
+                    <span
+                      className={
+                        h.is_duplicate ? "badge badge-warning" : "badge badge-success"
+                      }
+                    >
                       {h.is_duplicate ? "Повторне" : "Унікальне"}
                     </span>
                   </td>
