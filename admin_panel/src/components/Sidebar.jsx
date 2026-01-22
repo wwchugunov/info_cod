@@ -19,6 +19,12 @@ const links = [
 
 export default function Sidebar() {
   const { role, email } = useAdminInfo();
+  const roleLabel = {
+    viewer: "Перегляд",
+    manager: "Менеджер",
+    admin: "Адміністратор",
+    superadmin: "Суперадмін",
+  }[role] || role;
 
   return (
     <aside className="sidebar">
@@ -34,7 +40,7 @@ export default function Sidebar() {
       </nav>
       <div className="sidebar-footer">
         <div>{email || "—"}</div>
-        <div>Роль: {role || "—"}</div>
+        <div>Роль: {roleLabel || "—"}</div>
       </div>
     </aside>
   );

@@ -1,6 +1,8 @@
 const paymentService = require("../service/payment.service");
 const Payment = require("../model/generatelink");
 const Company = require("../model/company.model");
+const { calculateCommission } = require("../service/payment.utils");
+const { generateNbuLink } = require("../service/nbu.service");
 const { logScanHistory } = require("../service/scanHistory.service");
 const { logBankHistory } = require("../service/bankHistory.service");
 
@@ -62,28 +64,39 @@ paymentController.getPaymentByLink = async (req, res) => {
       referrer: req.headers["referer"] || null,
     });
 
-    const paymentInfo = await paymentService.createPayment(
+    const currentAmount = Number(payment.amount);
+    const { commissionPercent, commissionFixed, finalAmount } = calculateCommission(
       payment.Company,
-      Number(payment.amount),
-      payment.purpose,
-      payment.Company.iban
+      currentAmount
     );
+    if (
+      Number(payment.commission_percent) !== commissionPercent ||
+      Number(payment.commission_fixed) !== commissionFixed
+    ) {
+      await payment.update({
+        commission_percent: commissionPercent,
+        commission_fixed: commissionFixed,
+      });
+    }
 
-    const paymentCode = paymentInfo.qrlink;
+    const paymentCode = generateNbuLink({
+      name: payment.Company.name,
+      iban: payment.Company.iban,
+      edrpo: payment.Company.edrpo,
+      amount: finalAmount,
+      purpose: payment.purpose,
+    });
     const paymentUrl = `https://bank.gov.ua/qr/${paymentCode}`;
 
     res.render("payment", {
       linkId: payment.link_id,
       purpose: payment.purpose,
-      originalAmount: Number(payment.amount),
-      commissionPercent: Number(payment.commission_percent),
-      commissionFixed: Number(payment.commission_fixed),
-      finalAmount:
-        Number(payment.amount) +
-        Number(payment.commission_percent) +
-        Number(payment.commission_fixed),
-      qrlink: paymentInfo.qrlink,
-      nbu_link: paymentInfo.qr_link,
+      originalAmount: currentAmount,
+      commissionPercent,
+      commissionFixed,
+      finalAmount,
+      qrlink: paymentCode,
+      nbu_link: payment.link_id,
       paymentUrl,
       paymentCode,
       company: {

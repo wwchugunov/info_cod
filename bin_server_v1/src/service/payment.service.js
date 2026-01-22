@@ -97,7 +97,7 @@ async function createPayment(
     name: company.name,
     iban: effectiveIban,
     edrpo: company.edrpo,
-    amount: normalizedAmount,
+    amount: finalAmount,
     purpose: normalizedPurpose
   });
 

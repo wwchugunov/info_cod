@@ -4,6 +4,12 @@ import Topbar from "../components/Topbar";
 import useAdminInfo from "../hooks/useAdminInfo";
 
 export default function AdminUsers() {
+  const roleLabels = {
+    viewer: "Перегляд",
+    manager: "Менеджер",
+    admin: "Адміністратор",
+    superadmin: "Суперадмін",
+  };
   const [items, setItems] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [form, setForm] = useState({
@@ -127,7 +133,7 @@ export default function AdminUsers() {
           />
           <input
             className="input"
-            placeholder="Email"
+            placeholder="Е-пошта"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
@@ -143,10 +149,10 @@ export default function AdminUsers() {
             value={form.role}
             onChange={(e) => setForm({ ...form, role: e.target.value })}
           >
-            <option value="viewer">viewer</option>
-            <option value="manager">manager</option>
-            <option value="admin">admin</option>
-            <option value="superadmin">superadmin</option>
+            <option value="viewer">{roleLabels.viewer}</option>
+            <option value="manager">{roleLabels.manager}</option>
+            <option value="admin">{roleLabels.admin}</option>
+            <option value="superadmin">{roleLabels.superadmin}</option>
           </select>
           <select
             className="input"
@@ -176,7 +182,7 @@ export default function AdminUsers() {
               <tr>
                 <th>ID</th>
                 <th>Ім'я</th>
-                <th>Email</th>
+                <th>Е-пошта</th>
                 <th>Роль</th>
                 <th>Компанія</th>
                 <th>Активний</th>
@@ -189,7 +195,7 @@ export default function AdminUsers() {
                   <td>{user.id}</td>
                   <td>{user.name}</td>
                   <td>{user.email}</td>
-                  <td>{user.role}</td>
+                  <td>{roleLabels[user.role] || user.role}</td>
                   <td>
                     {user.company_id
                       ? companyNameById[user.company_id] ||
@@ -241,7 +247,7 @@ export default function AdminUsers() {
                 />
               </label>
               <label className="field">
-                Email
+                Е-пошта
                 <input
                   className="input"
                   value={editForm.email}
@@ -255,10 +261,10 @@ export default function AdminUsers() {
                   value={editForm.role}
                   onChange={(e) => updateEditField("role", e.target.value)}
                 >
-                  <option value="viewer">viewer</option>
-                  <option value="manager">manager</option>
-                  <option value="admin">admin</option>
-                  <option value="superadmin">superadmin</option>
+                  <option value="viewer">{roleLabels.viewer}</option>
+                  <option value="manager">{roleLabels.manager}</option>
+                  <option value="admin">{roleLabels.admin}</option>
+                  <option value="superadmin">{roleLabels.superadmin}</option>
                 </select>
               </label>
               <label className="field">

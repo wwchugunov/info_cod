@@ -59,7 +59,7 @@ export default function Settings() {
           />
           <input
             className="input"
-            placeholder="Email"
+            placeholder="Е-пошта"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />

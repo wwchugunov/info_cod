@@ -16,7 +16,7 @@ export default function ApiDocs() {
 
   const rotateToken = async () => {
     if (!companyId) {
-      setStatus("Укажите ID компании.");
+      setStatus("Вкажіть ID компанії.");
       return;
     }
     setLoading(true);
@@ -99,7 +99,10 @@ export default function ApiDocs() {
         <p style={{ color: "#6e6a67" }}>
           Базовий URL: <strong>/api</strong>.
         </p>
-        <div className="card-grid" style={{ marginTop: 12 }}>
+        <div
+          className="card-grid"
+          style={{ marginTop: 12, gridTemplateColumns: "1fr" }}
+        >
           <div className="card">
             <h3>POST /api/payment/generate</h3>
             <p style={{ color: "#6e6a67" }}>
@@ -132,9 +135,10 @@ Body:
 }`}
             </div>
             <p style={{ color: "#6e6a67", marginTop: 10 }}>
-              <strong>amount</strong> — сума платежу; <strong>purpose</strong> —
-              призначення платежу; <strong>iban</strong> — IBAN отримувача
-              (UA...).
+              <strong>amount</strong> — сума платежу в гривнях (число).
+              <strong> purpose</strong> — призначення платежу, відображається у
+              платежі.
+              <strong> iban</strong> — IBAN отримувача в форматі UA...
             </p>
           </div>
           <div className="card">
@@ -175,7 +179,8 @@ Body:
               <strong> commissionFixed</strong> — фіксована комісія.
               <strong> finalAmount</strong> — підсумкова сума до сплати.
               <strong> linkId</strong> — готове посилання на сторінку оплати.
-              <strong> qr_link</strong> — ідентифікатор посилання.
+              <strong> qr_link</strong> — ідентифікатор посилання (UUID), який
+              підставляється у URL.
               <strong> qrlink</strong> — base64 URL‑рядок для генерації QR.
             </p>
             <div
@@ -189,7 +194,7 @@ Body:
               }}
             >
               {`Сторінка оплати:
-https://your-domain.com/api/payment/payment/:linkId`}
+https://infokod.com.ua/api/payment/payment/1bfbce81-efd9-4a8b-8b3b-47543a481ed3`}
             </div>
           </div>
         </div>
@@ -202,7 +207,7 @@ https://your-domain.com/api/payment/payment/:linkId`}
         <div className="form-grid">
           <div className="field">
             <strong>DAILY_LIMIT_REACHED</strong>
-            <p className="muted-text">Превищено денний ліміт генерацій.</p>
+            <p className="muted-text">Перевищено денний ліміт генерацій.</p>
           </div>
           <div className="field">
             <strong>COMPANY_DISABLED</strong>

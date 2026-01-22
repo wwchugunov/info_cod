@@ -35,7 +35,7 @@ export default function Login() {
           <input
             className="input"
             style={{ width: "100%", marginBottom: 12 }}
-            placeholder="Email"
+            placeholder="Е-пошта"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
