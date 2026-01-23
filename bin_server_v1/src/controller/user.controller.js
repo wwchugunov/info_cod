@@ -11,6 +11,7 @@ userController.registerCompany = async (req, res) => {
       parentCompanyId,
     } = await companyService.registerCompany(req.body);
 
+    const expose = String(process.env.ALLOW_SENSITIVE_RESPONSES || "").toLowerCase() === "true";
     res.status(201).json({
       message: 'Компания успешно зарегистрирована',
       company: {
@@ -18,7 +19,7 @@ userController.registerCompany = async (req, res) => {
         name: company.name,
         contact_name: company.contact_name,
         contact_phone: company.contact_phone,
-        api_token: apiTokenPlain,
+        api_token: expose ? apiTokenPlain : null,
         ip_whitelist: company.ip_whitelist || [],
         daily_limit: company.daily_limit,
         commission_percent: Number(company.commission_percent || 0),

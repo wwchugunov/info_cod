@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Topbar from "../components/Topbar";
 import api from "../services/api";
-import { clearTokens, getRefreshToken } from "../services/auth";
+import { clearTokens, getRefreshToken, isTokenAuthMode } from "../services/auth";
 import useAdminInfo from "../hooks/useAdminInfo";
 
 export default function Settings() {
@@ -31,13 +31,15 @@ export default function Settings() {
   };
 
   const handleLogout = async () => {
-    const refreshToken = getRefreshToken();
-    if (refreshToken) {
-      try {
+    try {
+      if (isTokenAuthMode()) {
+        const refreshToken = getRefreshToken();
         await api.post("/admin/auth/logout", { refresh_token: refreshToken });
-      } catch (err) {
-        // ignore logout errors
+      } else {
+        await api.post("/admin/auth/logout");
       }
+    } catch (err) {
+      // ignore logout errors
     }
     clearTokens();
     navigate("/login", { replace: true });

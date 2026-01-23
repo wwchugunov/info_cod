@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const { requireAdmin } = require("../middleware/adminAuth.middleware");
+const { adminAuthRateLimit } = require("../middleware/adminRateLimit.middleware");
 const adminController = require("../controller/admin.controller");
 const adminAuthController = require("../admin/controller/adminAuth.controller");
 const adminUsersController = require("../admin/controller/adminUsers.controller");
 
-router.post("/auth/login", adminAuthController.login);
-router.post("/auth/refresh", adminAuthController.refresh);
+router.post("/auth/login", adminAuthRateLimit, adminAuthController.login);
+router.post("/auth/refresh", adminAuthRateLimit, adminAuthController.refresh);
 router.post("/auth/logout", adminAuthController.logout);
 router.post("/errors/client", adminController.logClientError);
 router.get(

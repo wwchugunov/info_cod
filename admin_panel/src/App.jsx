@@ -13,18 +13,20 @@ import AdminUsers from "./pages/AdminUsers";
 import ApiDocs from "./pages/ApiDocs";
 import Errors from "./pages/Errors";
 import Load from "./pages/Load";
-import { getAccessToken } from "./services/auth";
-import { decodeJwt } from "./services/auth";
 import { hasRole } from "./services/roles";
+import useAdminInfo from "./hooks/useAdminInfo";
 
 function ProtectedLayout() {
-  const token = getAccessToken();
-  if (!token) {
-    return <Navigate to="/login" replace />;
-  }
-
+  const { isAuthenticated, isLoading } = useAdminInfo();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const closeSidebar = () => setSidebarOpen(false);
+
+  if (isLoading) {
+    return null;
+  }
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <div className={`app-shell ${sidebarOpen ? "sidebar-open" : ""}`}>
@@ -51,12 +53,14 @@ function ProtectedLayout() {
 }
 
 function RoleRoute({ roles, element }) {
-  const token = getAccessToken();
-  if (!token) {
+  const { role, isAuthenticated, isLoading } = useAdminInfo();
+  if (isLoading) {
+    return null;
+  }
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  const payload = decodeJwt(token);
-  if (!hasRole(payload?.role, roles)) {
+  if (!hasRole(role, roles)) {
     return <Navigate to="/payments" replace />;
   }
   return element;

@@ -7,6 +7,15 @@ function getTokenFromHeaders(req) {
   if (type === "Bearer" && token) {
     return token;
   }
+  const rawCookie = req.headers.cookie || "";
+  const parts = rawCookie.split(";").map((part) => part.trim());
+  for (const part of parts) {
+    if (!part) continue;
+    const [key, ...rest] = part.split("=");
+    if (key === "admin_access") {
+      return decodeURIComponent(rest.join("="));
+    }
+  }
   return "";
 }
 

@@ -61,6 +61,32 @@ async function authToken(req, res, next) {
       });
     }
 
+    const whitelist = Array.isArray(company.ip_whitelist)
+      ? company.ip_whitelist.map((ip) => String(ip || "").trim()).filter(Boolean)
+      : [];
+    if (whitelist.length) {
+      const clientIp = req.ip;
+      if (!clientIp || !whitelist.includes(clientIp)) {
+        await logGenerationHistory({
+          company,
+          tokenHash,
+          status: "failed",
+          amount: Number.isFinite(Number(req.body?.amount))
+            ? Number(req.body.amount)
+            : null,
+          purpose: typeof req.body?.purpose === "string" ? req.body.purpose.trim() : null,
+          clientIp: req.ip,
+          userAgent: req.headers["user-agent"],
+          errorCode: "IP_NOT_ALLOWED",
+          errorMessage: "IP адрес не в білому списку",
+        });
+        return res.status(403).json({
+          error: "IP_NOT_ALLOWED",
+          message: "IP адрес не в білому списку",
+        });
+      }
+    }
+
     if (company.is_active === false) {
       await logGenerationHistory({
         company,

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
-import { setTokens } from "../services/auth";
+import { isTokenAuthMode, setTokens } from "../services/auth";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -17,10 +17,9 @@ export default function Login() {
         email,
         password,
       });
-      setTokens({
-        access_token: res.data.access_token,
-        refresh_token: res.data.refresh_token,
-      });
+      if (isTokenAuthMode()) {
+        setTokens(res.data || {});
+      }
       navigate("/dashboard");
     } catch (err) {
       setError("Невірні дані для входу");

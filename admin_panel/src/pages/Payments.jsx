@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import Topbar from "../components/Topbar";
-import useRole from "../hooks/useRole";
+import useAdminInfo from "../hooks/useAdminInfo";
 import { formatDateTime } from "../utils/date";
 
 export default function Payments({ title = "Платежі", subtitle = "Пошук і моніторинг" }) {
@@ -16,7 +16,7 @@ export default function Payments({ title = "Платежі", subtitle = "Пош�
   const [total, setTotal] = useState(0);
   const limit = 50;
   const totalPages = total ? Math.ceil(total / limit) : 1;
-  const role = useRole();
+  const { role } = useAdminInfo();
   const formatMoney = (value) => Number(value || 0).toFixed(2);
   const sumCommission = (item) =>
     Number(item.commission_percent || 0) + Number(item.commission_fixed || 0);

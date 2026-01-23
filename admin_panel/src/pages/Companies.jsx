@@ -908,7 +908,7 @@ export default function Companies() {
                     color: "#1c1a19",
                   }}
                 >
-                  {registration.api_token || "—"}
+                  {registration.api_token || "Токен не повертається в прод"}
                 </div>
               </div>
               <div className="field">
@@ -927,7 +927,7 @@ export default function Companies() {
                     color: "#1c1a19",
                   }}
                 >
-                  {registration.admin_password || "—"}
+                  {registration.admin_password || "Пароль не повертається в прод"}
                 </div>
               </div>
             </div>
@@ -1051,7 +1051,7 @@ export default function Companies() {
                     color: "#1c1a19",
                   }}
                 >
-                  {createdAdmin.password}
+                  {createdAdmin.password || "Пароль не повертається в прод"}
                 </div>
               </div>
             </div>

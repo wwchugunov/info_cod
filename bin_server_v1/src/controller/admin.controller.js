@@ -1,4 +1,4 @@
-const { Op, QueryTypes } = require("sequelize");
+const { Op, QueryTypes, Sequelize } = require("sequelize");
 const Company = require("../model/company.model");
 const Payment = require("../model/generatelink");
 const GenerationHistory = require("../model/generationHistory.model");
@@ -176,6 +176,10 @@ function hasPermission(permissions, key) {
   return Boolean(permissions?.__all || permissions?.[key]);
 }
 
+function canExposeSensitive() {
+  return String(process.env.ALLOW_SENSITIVE_RESPONSES || "").toLowerCase() === "true";
+}
+
 function parseNumber(value, fieldName) {
   if (value === undefined || value === null || value === "") return undefined;
   const num = Number(value);
@@ -278,7 +282,10 @@ adminController.listCompanies = async (req, res) => {
       { contact_phone: { [Op.iLike]: `%${search}%` } },
       { iban: { [Op.iLike]: `%${search}%` } },
       { edrpo: { [Op.iLike]: `%${search}%` } },
-      { internal_id: { [Op.iLike]: `%${search}%` } },
+      Sequelize.where(
+        Sequelize.cast(Sequelize.col("internal_id"), "text"),
+        { [Op.iLike]: `%${search}%` }
+      ),
     ];
     if (Number.isFinite(searchNumber)) {
       conditions.push({ id: searchNumber });
@@ -398,11 +405,11 @@ adminController.createCompany = async (req, res) => {
     });
     return res.status(201).json({
       company,
-      api_token: apiTokenPlain,
+      api_token: canExposeSensitive() ? apiTokenPlain : null,
       is_sub_company: isSubCompany,
       parent_company_id: parentCompanyId,
       admin_login: login,
-      admin_password: password,
+      admin_password: canExposeSensitive() ? password : null,
     });
   } catch (err) {
     return res.status(400).json({ message: err.message });
@@ -1680,10 +1687,14 @@ adminController.rotateCompanyToken = async (req, res) => {
   company.api_token_prefix = apiToken.slice(0, 8);
   await company.save({ allowApiTokenUpdate: true });
 
-  return res.json({ api_token: apiToken });
+  return res.json({ api_token: canExposeSensitive() ? apiToken : null });
 };
 
 adminController.getCompanyToken = async (req, res) => {
+  const permissions = await getAdminPermissions(req);
+  if (!hasPermission(permissions, "token_generate")) {
+    return res.status(403).json({ message: "Недостаточно прав" });
+  }
   const adminCompanyId = getAdminCompanyId(req);
   const companyId = Number(req.params.id);
   if (!Number.isFinite(companyId)) {
@@ -1698,10 +1709,16 @@ adminController.getCompanyToken = async (req, res) => {
   if (!company) {
     return res.status(404).json({ message: "Компания не найдена" });
   }
-  return res.json({ api_token: company.api_token_last || null });
+  return res.json({
+    api_token: canExposeSensitive() ? company.api_token_last || null : null,
+  });
 };
 
 adminController.listCompanyTokens = async (req, res) => {
+  const permissions = await getAdminPermissions(req);
+  if (!hasPermission(permissions, "token_generate")) {
+    return res.status(403).json({ message: "Недостаточно прав" });
+  }
   const adminCompanyId = getAdminCompanyId(req);
   const companyIds = await getCompanyScope(adminCompanyId, null);
   const where = {};
@@ -1721,7 +1738,7 @@ adminController.listCompanyTokens = async (req, res) => {
     items: companies.map((company) => ({
       id: company.id,
       name: company.name,
-      api_token: company.api_token_last || null,
+      api_token: canExposeSensitive() ? company.api_token_last || null : null,
     })),
   });
 };
@@ -1752,7 +1769,7 @@ adminController.createCompanyAdmin = async (req, res) => {
     role: user.role,
     company_id: user.company_id,
     admin_login: login,
-    admin_password: password,
+    admin_password: canExposeSensitive() ? password : null,
   });
 };
 

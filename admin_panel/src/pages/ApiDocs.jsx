@@ -24,6 +24,9 @@ export default function ApiDocs() {
       setToken(res.data.api_token || "");
     } catch (err) {
       setToken("");
+      if (err?.response?.status === 403) {
+        setStatus("Доступ до токенів вимкнено в прод середовищі.");
+      }
     }
   };
 
@@ -33,6 +36,9 @@ export default function ApiDocs() {
       setTokens(res.data.items || []);
     } catch (err) {
       setTokens([]);
+      if (err?.response?.status === 403) {
+        setStatus("Доступ до токенів вимкнено в прод середовищі.");
+      }
     }
   };
 
@@ -168,8 +174,8 @@ export default function ApiDocs() {
         </div>
         <p style={{ color: "#6e6a67" }}>
           Отримання токена: відкрийте розділ <strong>API</strong> і натисніть
-          "Згенерувати токен". Під час реєстрації компанії токен також
-          відображається в модальному вікні.
+          "Згенерувати токен". У прод середовищі токен може не
+          відображатися в інтерфейсі.
         </p>
         <p style={{ color: "#6e6a67" }}>
           Якщо дія недоступна, зверніться до адміністратора.

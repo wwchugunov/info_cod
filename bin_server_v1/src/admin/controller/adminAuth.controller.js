@@ -9,6 +9,63 @@ const {
 } = require("../service/adminAuth.service");
 
 const adminAuthController = {};
+const allowTokenAuth =
+  String(process.env.ADMIN_ALLOW_TOKEN_AUTH || "").toLowerCase() === "true";
+
+function parseDurationMs(raw, fallbackMs) {
+  const value = String(raw || "").trim();
+  if (!value) return fallbackMs;
+  const match = value.match(/^(\d+)([smhd])$/i);
+  if (!match) return fallbackMs;
+  const amount = Number(match[1]);
+  const unit = match[2].toLowerCase();
+  const scale = unit === "s" ? 1000 : unit === "m" ? 60000 : unit === "h" ? 3600000 : 86400000;
+  return amount * scale;
+}
+
+function getCookie(req, name) {
+  const raw = req.headers.cookie || "";
+  const parts = raw.split(";").map((part) => part.trim());
+  for (const part of parts) {
+    if (!part) continue;
+    const [key, ...rest] = part.split("=");
+    if (key === name) {
+      return decodeURIComponent(rest.join("="));
+    }
+  }
+  return "";
+}
+
+function cookieOptions(req) {
+  const allowInsecure =
+    String(process.env.ADMIN_COOKIE_INSECURE || "").toLowerCase() === "true";
+  const isSecure = allowInsecure
+    ? false
+    : req.secure ||
+      req.headers["x-forwarded-proto"] === "https" ||
+      process.env.BASE_PROTOCOL === "https" ||
+      process.env.NODE_ENV === "production";
+  return {
+    httpOnly: true,
+    secure: Boolean(isSecure),
+    sameSite: "lax",
+    path: "/api/admin",
+  };
+}
+
+function setAuthCookies(res, req, tokens) {
+  const accessTtlMs = parseDurationMs(process.env.ADMIN_ACCESS_TTL, 15 * 60 * 1000);
+  const refreshTtlDays = Number(process.env.ADMIN_REFRESH_TTL_DAYS || 7);
+  const opts = cookieOptions(req);
+  res.cookie("admin_access", tokens.accessToken, {
+    ...opts,
+    maxAge: accessTtlMs,
+  });
+  res.cookie("admin_refresh", tokens.refreshToken, {
+    ...opts,
+    maxAge: refreshTtlDays * 24 * 60 * 60 * 1000,
+  });
+}
 
 adminAuthController.login = async (req, res) => {
   const { email, password } = req.body;
@@ -32,9 +89,14 @@ adminAuthController.login = async (req, res) => {
   await admin.save();
 
   const tokens = await issueTokens(admin, req);
+  setAuthCookies(res, req, tokens);
   return res.json({
-    access_token: tokens.accessToken,
-    refresh_token: tokens.refreshToken,
+    ...(allowTokenAuth
+      ? {
+          access_token: tokens.accessToken,
+          refresh_token: tokens.refreshToken,
+        }
+      : {}),
     role: admin.role,
     email: admin.email,
     name: admin.name,
@@ -43,29 +105,38 @@ adminAuthController.login = async (req, res) => {
 };
 
 adminAuthController.refresh = async (req, res) => {
-  const { refresh_token: refreshToken } = req.body;
+  const refreshToken =
+    (allowTokenAuth ? req.body?.refresh_token : "") ||
+    getCookie(req, "admin_refresh");
   if (!refreshToken) {
     return res.status(400).json({ message: "refresh_token обязателен" });
   }
 
   try {
     const tokens = await rotateRefreshToken(refreshToken, req);
-    return res.json({
-      access_token: tokens.accessToken,
-      refresh_token: tokens.refreshToken,
-    });
+    setAuthCookies(res, req, tokens);
+    return res.json(
+      allowTokenAuth
+        ? { access_token: tokens.accessToken, refresh_token: tokens.refreshToken }
+        : { ok: true }
+    );
   } catch (err) {
     return res.status(401).json({ message: "Недействительный refresh_token" });
   }
 };
 
 adminAuthController.logout = async (req, res) => {
-  const { refresh_token: refreshToken } = req.body;
+  const refreshToken =
+    (allowTokenAuth ? req.body?.refresh_token : "") ||
+    getCookie(req, "admin_refresh");
   if (refreshToken) {
     await AdminSession.destroy({
       where: { refresh_token_hash: hashToken(refreshToken) },
     });
   }
+  const opts = cookieOptions(req);
+  res.clearCookie("admin_access", opts);
+  res.clearCookie("admin_refresh", opts);
   return res.json({ message: "OK" });
 };
 

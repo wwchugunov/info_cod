@@ -30,6 +30,26 @@ app.set(
   trustProxy === "true" ? true : trustProxy || "loopback, linklocal, uniquelocal"
 );
 
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), payment=()"
+  );
+  if (String(process.env.ENABLE_CSP || "").toLowerCase() === "true") {
+    const csp =
+      process.env.CSP ||
+      "default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; img-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'";
+    res.setHeader("Content-Security-Policy", csp);
+  }
+  if (req.secure || req.headers["x-forwarded-proto"] === "https") {
+    res.setHeader("Strict-Transport-Security", "max-age=15552000; includeSubDomains");
+  }
+  next();
+});
+
 process.on("unhandledRejection", (reason) => {
   logError({
     source: "server",
@@ -115,7 +135,12 @@ app.get('/', (req, res) => {
 
 
 
-app.use(cors());
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 app.use(express.json({ limit: '1mb' }));
 app.use(rateLimitPaymentGenerate);
 app.use(overloadGuard);
@@ -148,6 +173,24 @@ app.use((err, req, res, next) => {
 
 const start = async () => {
   try {
+    if (process.env.NODE_ENV === "production") {
+      const required = [
+        "PORT",
+        "DB_NAME",
+        "DB_USER",
+        "DB_PAS",
+        "HOST_BD",
+        "ADMIN_JWT_SECRET",
+        "ADMIN_JWT_REFRESH_SECRET",
+      ];
+      const missing = required.filter((key) => !process.env[key]);
+      if (missing.length) {
+        throw new Error(`Missing required env vars: ${missing.join(", ")}`);
+      }
+    }
+    if (!Number.isFinite(port)) {
+      throw new Error("PORT is required and must be a number");
+    }
     await sequelize.authenticate();
     if (process.env.DB_SYNC === "true") {
       await sequelize.sync({ alter: process.env.DB_SYNC_ALTER === "true" });
