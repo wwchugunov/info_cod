@@ -54,7 +54,7 @@ function encodeWin1251(str) {
 }
 
 function toCsvBuffer(headers, rows, options = {}) {
-  const encoding = options.encoding || "win1251";
+  const encoding = options.encoding || "utf16le";
   const csv = toCsv(headers, rows, options);
   if (encoding === "win1251" || encoding === "cp1251" || encoding === "windows-1251") {
     return Buffer.from(encodeWin1251(csv));

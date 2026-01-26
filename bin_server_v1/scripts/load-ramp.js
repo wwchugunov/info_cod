@@ -2,7 +2,7 @@ const http = require("http");
 const https = require("https");
 const { performance } = require("perf_hooks");
 
-const BASE_URL = process.env.BASE_URL || "http://infokod.com.ua";
+const BASE_URL = process.env.BASE_URL || "https://infokod.com.ua";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const COMPANY_TOKEN = process.env.COMPANY_TOKEN || "";

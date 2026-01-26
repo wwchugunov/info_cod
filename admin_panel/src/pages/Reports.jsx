@@ -46,10 +46,10 @@ export default function Reports() {
     loadMetrics();
   }, []);
 
-  const downloadCsv = async (path, filename) => {
+  const downloadCsv = async (path, filename, encoding) => {
     if (!canDownload) return;
     const res = await api.get(path, {
-      params: buildParams(),
+      params: { ...buildParams(), ...(encoding ? { encoding } : {}) },
       responseType: "blob",
     });
     const url = URL.createObjectURL(res.data);
@@ -148,7 +148,9 @@ export default function Reports() {
           <p style={{ color: "#6e6a67" }}>CSV вивантаження</p>
           <button
             className="button"
-            onClick={() => downloadCsv("/admin/export/companies.csv", "companies.csv")}
+            onClick={() =>
+              downloadCsv("/admin/export/companies.csv", "companies.csv", "utf-16le")
+            }
             disabled={!canDownload}
           >
             Завантажити CSV
@@ -162,7 +164,8 @@ export default function Reports() {
             onClick={() =>
               downloadCsv(
                 "/admin/export/generation-history.csv",
-                "generation-history.csv"
+                "generation-history.csv",
+                "utf-16le"
               )
             }
             disabled={!canDownload}
@@ -175,7 +178,9 @@ export default function Reports() {
           <p style={{ color: "#6e6a67" }}>CSV вивантаження</p>
           <button
             className="button"
-            onClick={() => downloadCsv("/admin/export/scan-history.csv", "scan-history.csv")}
+            onClick={() =>
+              downloadCsv("/admin/export/scan-history.csv", "scan-history.csv", "utf-16le")
+            }
             disabled={!canDownload}
           >
             Завантажити CSV

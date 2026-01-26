@@ -14,9 +14,19 @@ const ScanHistory = require("../src/model/scanHistory.model");
 const BankHistory = require("../src/model/bankHistory.model");
 const AdminUser = require("../src/admin/model/adminUser.model");
 
-const TEST_PASSWORD = process.env.TEST_ADMIN_PASSWORD || "Test123!";
-const TEST_COMPANY_TOKEN =
-  process.env.TEST_COMPANY_TOKEN || "test_company_token_1234567890";
+const TEST_PASSWORD = process.env.TEST_ADMIN_PASSWORD;
+const TEST_COMPANY_TOKEN = process.env.TEST_COMPANY_TOKEN;
+
+if (!TEST_PASSWORD) {
+  throw new Error(
+    "TEST_ADMIN_PASSWORD must be set before running scripts/seed.js (e.g. TEST_ADMIN_PASSWORD=Secret npm run seed)."
+  );
+}
+if (!TEST_COMPANY_TOKEN) {
+  throw new Error(
+    "TEST_COMPANY_TOKEN must be set before running scripts/seed.js."
+  );
+}
 
 async function ensureAdminUser({ email, name, role, companyId }) {
   const normalizedEmail = String(email || "").trim().toLowerCase();

@@ -1,4 +1,5 @@
 const companyService = require('../service/company.service');
+const { canExposeSensitive } = require("../utils/sensitiveExposure");
 
 const userController = {};
 
@@ -11,7 +12,7 @@ userController.registerCompany = async (req, res) => {
       parentCompanyId,
     } = await companyService.registerCompany(req.body);
 
-    const expose = String(process.env.ALLOW_SENSITIVE_RESPONSES || "").toLowerCase() === "true";
+    const expose = canExposeSensitive();
     res.status(201).json({
       message: 'Компания успешно зарегистрирована',
       company: {

@@ -10,6 +10,7 @@ const crypto = require("crypto");
 const { toCsvBuffer } = require("../service/csv.utils");
 const companyService = require("../service/company.service");
 const { calculateCommission, getDayRange } = require("../service/payment.utils");
+const { canExposeSensitive } = require("../utils/sensitiveExposure");
 const ErrorLog = require("../admin/model/errorLog.model");
 const SystemMetric = require("../admin/model/systemMetric.model");
 
@@ -176,10 +177,6 @@ function hasPermission(permissions, key) {
   return Boolean(permissions?.__all || permissions?.[key]);
 }
 
-function canExposeSensitive() {
-  return String(process.env.ALLOW_SENSITIVE_RESPONSES || "").toLowerCase() === "true";
-}
-
 function parseNumber(value, fieldName) {
   if (value === undefined || value === null || value === "") return undefined;
   const num = Number(value);
@@ -239,16 +236,10 @@ async function getScanDuplicateCounts(keys) {
 
 function getCsvEncoding(req) {
   const raw = String(req.query.encoding || "").toLowerCase();
-  if (raw === "win1251" || raw === "cp1251" || raw === "windows-1251") {
-    return { encoding: "win1251", charset: "windows-1251" };
-  }
   if (raw === "utf16le" || raw === "utf-16le") {
     return { encoding: "utf16le", charset: "utf-16le" };
   }
-  if (raw === "utf8" || raw === "utf-8") {
-    return { encoding: "utf8", charset: "utf-8" };
-  }
-  return { encoding: "win1251", charset: "windows-1251" };
+  return { encoding: "utf16le", charset: "utf-16le" };
 }
 
 const adminController = {};
@@ -1337,6 +1328,7 @@ adminController.exportCompanies = async (req, res) => {
   ]);
   const csvOptions = getCsvEncoding(req);
   const csv = toCsvBuffer(headers, rows, csvOptions);
+  res.setHeader("Cache-Control", "no-store");
   res.setHeader("Content-Type", `text/csv; charset=${csvOptions.charset}`);
   res.setHeader("Content-Disposition", "attachment; filename=\"companies.csv\"");
   return res.send(csv);
@@ -1396,6 +1388,7 @@ adminController.exportPayments = async (req, res) => {
   ]);
   const csvOptions = getCsvEncoding(req);
   const csv = toCsvBuffer(headers, rows, csvOptions);
+  res.setHeader("Cache-Control", "no-store");
   res.setHeader("Content-Type", `text/csv; charset=${csvOptions.charset}`);
   res.setHeader("Content-Disposition", "attachment; filename=\"payments.csv\"");
   return res.send(csv);
@@ -1477,6 +1470,7 @@ adminController.exportGenerationHistory = async (req, res) => {
   });
   const csvOptions = getCsvEncoding(req);
   const csv = toCsvBuffer(headers, rowsWithCounts, csvOptions);
+  res.setHeader("Cache-Control", "no-store");
   res.setHeader("Content-Type", `text/csv; charset=${csvOptions.charset}`);
   res.setHeader("Content-Disposition", "attachment; filename=\"generation-history.csv\"");
   return res.send(csv);
@@ -1514,6 +1508,12 @@ adminController.exportScanHistory = async (req, res) => {
       {
         model: Payment,
         attributes: ["id", "amount", "commission_percent", "commission_fixed"],
+        include: [
+          {
+            model: Company,
+            attributes: ["name"],
+          },
+        ],
       },
     ],
   });
@@ -1545,11 +1545,13 @@ adminController.exportScanHistory = async (req, res) => {
       ? Number(payment.commission_percent || 0) + Number(payment.commission_fixed || 0)
       : null;
     const finalAmount = amount !== null && commission !== null ? amount + commission : null;
+    const companyName =
+      payment?.Company?.name || payment?.company_name || h.company_name;
     return [
     h.id,
     h.payment_id,
     h.company_id,
-    h.company_name,
+    companyName,
     h.link_id,
     amount,
     commission,
@@ -1578,6 +1580,7 @@ adminController.exportScanHistory = async (req, res) => {
   });
   const csvOptions = getCsvEncoding(req);
   const csv = toCsvBuffer(headers, rowsWithCounts, csvOptions);
+  res.setHeader("Cache-Control", "no-store");
   res.setHeader("Content-Type", `text/csv; charset=${csvOptions.charset}`);
   res.setHeader("Content-Disposition", "attachment; filename=\"scan-history.csv\"");
   return res.send(csv);
@@ -1644,6 +1647,7 @@ adminController.exportBankHistory = async (req, res) => {
   ]);
   const csvOptions = getCsvEncoding(req);
   const csv = toCsvBuffer(headers, rows, csvOptions);
+  res.setHeader("Cache-Control", "no-store");
   res.setHeader("Content-Type", `text/csv; charset=${csvOptions.charset}`);
   res.setHeader("Content-Disposition", "attachment; filename=\"bank-history.csv\"");
   return res.send(csv);

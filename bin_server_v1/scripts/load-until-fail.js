@@ -2,7 +2,7 @@ const http = require("http");
 const https = require("https");
 const { performance } = require("perf_hooks");
 
-const BASE_URL = process.env.BASE_URL || "http://infokod.com.ua";
+const BASE_URL = process.env.BASE_URL || "https://infokod.com.ua";
 const COMPANY_TOKEN = process.env.COMPANY_TOKEN || "";
 
 function requestJson({ method, url, headers, body }) {

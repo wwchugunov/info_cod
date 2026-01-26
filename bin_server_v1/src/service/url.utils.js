@@ -12,7 +12,7 @@ function getBaseUrl() {
     return "";
   }
   const hasProtocol = /^https?:\/\//i.test(domain);
-  const protocol = hasProtocol ? "" : String(process.env.BASE_PROTOCOL || "");
+  const protocol = hasProtocol ? "" : String(process.env.BASE_PROTOCOL || "http");
   const port = process.env.PORT;
   const base = hasProtocol || !protocol ? domain : `${protocol}://${domain}`;
 

@@ -2,11 +2,18 @@ const http = require("http");
 const https = require("https");
 const { performance } = require("perf_hooks");
 
-const BASE_URL = process.env.BASE_URL || "http://infokod.com.ua";
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "";
+const BASE_URL = process.env.BASE_URL || "https://infokod.com.ua";
+const ADMIN_EMAIL = String(process.env.ADMIN_EMAIL || "").trim();
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const ADMIN_TOKEN_ENV = process.env.ADMIN_TOKEN || "";
-const COMPANY_TOKEN = process.env.COMPANY_TOKEN || "";
+const COMPANY_TOKEN = String(process.env.COMPANY_TOKEN || "").trim();
+
+function ensureEnv(entries) {
+  const missing = entries.filter(([, value]) => !value).map(([name]) => name);
+  if (!missing.length) return true;
+  console.error(`Missing required environment variables: ${missing.join(", ")}`);
+  return false;
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -115,7 +122,6 @@ async function loadTest({ name, method, path, headers, body, durationSec, concur
 
 async function getAdminToken() {
   if (ADMIN_TOKEN_ENV) return ADMIN_TOKEN_ENV;
-  if (!ADMIN_EMAIL || !ADMIN_PASSWORD) return "";
   const res = await requestJson({
     method: "POST",
     url: `${BASE_URL}/api/admin/auth/login`,
@@ -132,14 +138,20 @@ async function getAdminToken() {
 }
 
 async function run() {
-  const adminToken = await getAdminToken();
-  if (!adminToken) {
-    console.error("Failed to obtain admin token");
+  if (
+    !ensureEnv([
+      ["ADMIN_EMAIL", ADMIN_EMAIL],
+      ["ADMIN_PASSWORD", ADMIN_PASSWORD],
+      ["COMPANY_TOKEN", COMPANY_TOKEN],
+    ])
+  ) {
     process.exitCode = 1;
     return;
   }
-  if (!COMPANY_TOKEN) {
-    console.error("Missing COMPANY_TOKEN");
+
+  const adminToken = await getAdminToken();
+  if (!adminToken) {
+    console.error("Failed to obtain admin token");
     process.exitCode = 1;
     return;
   }
