@@ -122,6 +122,11 @@ router.post(
   adminController.rotateCompanyToken
 );
 router.post(
+  "/companies/:id/payment/generate",
+  requireAdmin(["superadmin", "admin", "manager"]),
+  adminController.generateCompanyPayment
+);
+router.post(
   "/companies/:id/admin-user",
   requireAdmin(["superadmin"]),
   adminController.createCompanyAdmin

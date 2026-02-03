@@ -13,6 +13,7 @@ import AdminUsers from "./pages/AdminUsers";
 import ApiDocs from "./pages/ApiDocs";
 import Errors from "./pages/Errors";
 import Load from "./pages/Load";
+import PaymentLinkGenerator from "./pages/PaymentLinkGenerator";
 import { hasRole } from "./services/roles";
 import useAdminInfo from "./hooks/useAdminInfo";
 
@@ -94,7 +95,7 @@ export default function App() {
           path="/payments"
           element={
             <RoleRoute
-              roles={["superadmin", "manager", "viewer"]}
+              roles={["superadmin", "admin", "manager", "viewer"]}
               element={
                 <History
                   title="Генерації"
@@ -102,6 +103,15 @@ export default function App() {
                   fixedType="generation"
                 />
               }
+            />
+          }
+        />
+        <Route
+          path="/generate-link"
+          element={
+            <RoleRoute
+              roles={["superadmin", "admin", "manager", "viewer"]}
+              element={<PaymentLinkGenerator />}
             />
           }
         />

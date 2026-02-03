@@ -218,8 +218,7 @@ export default function ApiDocs() {
                 Body:
                 {
                   "amount": 1,
-                  "purpose": "Поповнення карти",
-                  "iban": "UA<IBAN>"
+                  "purpose": "Поповнення карти"
                 }`}
             </div>
             <p style={{ color: "#6e6a67", marginTop: 10 }}>

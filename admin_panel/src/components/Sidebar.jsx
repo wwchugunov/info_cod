@@ -5,7 +5,12 @@ import { hasRole } from "../services/roles";
 const links = [
   { to: "/dashboard", label: "Дашборд", roles: ["superadmin", "manager"] },
   { to: "/companies", label: "Компанії", roles: ["superadmin", "admin", "manager"] },
-  { to: "/payments", label: "Генерації", roles: ["superadmin", "manager", "viewer"] },
+  { to: "/payments", label: "Генерації", roles: ["superadmin", "admin", "manager", "viewer"] },
+  {
+    to: "/generate-link",
+    label: "Сгенерувати посилання",
+    roles: ["superadmin", "admin", "manager", "viewer"],
+  },
   { to: "/history", label: "Історія", roles: ["superadmin", "admin", "manager", "viewer"] },
   { to: "/scans", label: "Сканування", roles: ["superadmin", "admin", "manager", "viewer"] },
   { to: "/reports", label: "Звіти", roles: ["superadmin", "admin", "manager"] },

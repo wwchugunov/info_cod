@@ -9,8 +9,10 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const { toCsvBuffer } = require("../service/csv.utils");
 const companyService = require("../service/company.service");
+const paymentService = require("../service/payment.service");
 const { calculateCommission, getDayRange } = require("../service/payment.utils");
 const { canExposeSensitive } = require("../utils/sensitiveExposure");
+const { logGenerationHistory } = require("../service/generationHistory.service");
 const ErrorLog = require("../admin/model/errorLog.model");
 const SystemMetric = require("../admin/model/systemMetric.model");
 
@@ -768,6 +770,50 @@ adminController.listGenerationHistory = async (req, res) => {
     duplicate_count: Number(counts.duplicate_count || 0),
     items,
   });
+};
+
+adminController.generateCompanyPayment = async (req, res) => {
+  const companyId = Number(req.params.id);
+  if (!Number.isFinite(companyId) || companyId <= 0) {
+    return res.status(400).json({ message: "Некоректний ID компанії" });
+  }
+  const adminCompanyId = getAdminCompanyId(req);
+  if (adminCompanyId && !(await canAccessCompany(adminCompanyId, companyId))) {
+    return res.status(403).json({ message: "Недостатньо прав" });
+  }
+  const company = await Company.findByPk(companyId);
+  if (!company) {
+    return res.status(404).json({ message: "Компанія не знайдена" });
+  }
+  const { amount, purpose } = req.body || {};
+  try {
+    const paymentInfo = await paymentService.createPayment(
+      company,
+      Number(amount),
+      purpose,
+      company.iban,
+      req.ip,
+      req.headers["user-agent"],
+      null
+    );
+    return res.status(201).json({
+      message: "Successfully",
+      payment: paymentInfo,
+    });
+  } catch (err) {
+    await logGenerationHistory({
+      company,
+      tokenHash: null,
+      status: "failed",
+      amount: Number.isFinite(Number(amount)) ? Number(amount) : null,
+      purpose: typeof purpose === "string" ? purpose.trim() : null,
+      clientIp: req.ip,
+      userAgent: req.headers["user-agent"] || null,
+      errorCode: err?.code || "GENERATE_FAILED",
+      errorMessage: err?.message || "Невідома помилка",
+    }).catch(() => {});
+    return res.status(400).json({ message: err.message });
+  }
 };
 
 adminController.listScanHistory = async (req, res) => {
