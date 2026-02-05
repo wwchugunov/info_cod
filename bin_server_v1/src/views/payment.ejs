@@ -26,19 +26,35 @@
             <div class="total-box">
                 <div class="field">
                     <span class="label">Сума:</span>
-                    <span class="value">
+                    <% if (allowAmountEdit) { %>
+                      <div class="value amount-edit">
+                        <div class="amount-input-wrap">
+                          <input
+                            id="editable-amount"
+                            class="amount-input"
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value="<%= Number(originalAmount || 0).toFixed(2) %>"
+                          />
+                          <span class="amount-currency">грн</span>
+                        </div>
+                      </div>
+                    <% } else { %>
+                      <span class="value" id="amount-value">
                         <%= Number(originalAmount || 0).toFixed(2) %> грн
-                    </span>
+                      </span>
+                    <% } %>
                 </div>
                 <div class="field">
                     <span class="label">Комісія:</span>
-                    <span class="value">
+                    <span class="value" id="commission-value">
                         <%= (Number(commissionPercent || 0) + Number(commissionFixed || 0)).toFixed(2) %> грн
                     </span>
                 </div>
                 <div class="field total">
                     <span>Разом:</span>
-                    <span>
+                    <span id="total-value">
                         <%= Number(finalAmount || 0).toFixed(2) %> грн
                     </span>
                 </div>
@@ -92,6 +108,25 @@
         </div>
     </footer>
 
+    <script>
+        window.paymentConfig = {
+            allowAmountEdit: <%= allowAmountEdit ? "true" : "false" %>,
+            originalAmount: <%= Number(originalAmount || 0).toFixed(2) %>,
+            finalAmount: <%= Number(finalAmount || 0).toFixed(2) %>,
+            commissionPercentValue: <%= Number(company.commission_percent || 0) %>,
+            commissionFixedValue: <%= Number(company.commission_fixed || 0) %>,
+            usePercentCommission: <%= company.use_percent_commission ? "true" : "false" %>,
+            useFixedCommission: <%= company.use_fixed_commission ? "true" : "false" %>,
+            purpose: <%- JSON.stringify(purpose || "") %>,
+            companyName: <%- JSON.stringify(company.name || "") %>,
+            companyIban: <%- JSON.stringify(company.iban || "") %>,
+            companyEdrpo: <%- JSON.stringify(company.edrpo || "") %>,
+            bankQrBase: <%- JSON.stringify(bankQrBase || "") %>,
+            paymentCode: <%- JSON.stringify(paymentCode) %>,
+            paymentUrl: <%- JSON.stringify(paymentUrl) %>,
+            linkId: <%- JSON.stringify(linkId) %>,
+        };
+    </script>
     <script src="/js/main.js" defer></script>
 
 </body>

@@ -6,6 +6,8 @@ const { generateNbuLink } = require("../service/nbu.service");
 const { logGenerationHistory } = require("../service/generationHistory.service");
 const { logScanHistory } = require("../service/scanHistory.service");
 const { logBankHistory } = require("../service/bankHistory.service");
+const EditablePaymentLink = require("../modules/editablePaymentLinks/model");
+const GenerationHistory = require("../model/generationHistory.model");
 
 const paymentController = {};
 
@@ -100,11 +102,21 @@ paymentController.getPaymentByLink = async (req, res) => {
       amount: finalAmount,
       purpose: payment.purpose,
     });
-    const bankQrBase = process.env.BANK_QR_BASE || "";
-    const paymentUrl = bankQrBase
-      ? `${bankQrBase.replace(/\/+$/, "")}/${paymentCode}`
-      : paymentCode;
+    const bankQrBaseRaw = process.env.BANK_QR_BASE || "";
+    const bankQrBase = bankQrBaseRaw.replace(/\/+$/, "");
+    const paymentUrl = bankQrBase ? `${bankQrBase}/${paymentCode}` : paymentCode;
 
+    let allowAmountEdit = false;
+    try {
+      const editableLink = await EditablePaymentLink.findOne({
+        where: { link_id: linkId, status: "active" },
+      });
+      if (editableLink?.allow_amount_edit) {
+        allowAmountEdit = editableLink.expires_at >= new Date();
+      }
+    } catch (error) {
+      allowAmountEdit = false;
+    }
     res.render("payment", {
       linkId: payment.link_id,
       purpose: payment.purpose,
@@ -122,7 +134,13 @@ paymentController.getPaymentByLink = async (req, res) => {
         offer_url: payment.Company.offer_url || null,
         edrpo: payment.Company.edrpo,
         iban: payment.Company.iban,
+        use_percent_commission: payment.Company.use_percent_commission,
+        use_fixed_commission: payment.Company.use_fixed_commission,
+        commission_percent: payment.Company.commission_percent,
+        commission_fixed: payment.Company.commission_fixed,
       },
+      allowAmountEdit,
+      bankQrBase,
     });
 
   } catch (err) {
@@ -183,5 +201,61 @@ paymentController.logBank = async (req, res) => {
   return res.json({ ok: true });
 };
 
+paymentController.updateAmount = async (req, res) => {
+  try {
+    const { linkId } = req.params;
+    const requestedAmount = Number(req.body?.amount);
+    if (!Number.isFinite(requestedAmount) || requestedAmount <= 0) {
+      return res.status(400).json({ message: "Некоректна сума" });
+    }
+
+    const editableLink = await EditablePaymentLink.findOne({
+      where: { link_id: linkId, status: "active", allow_amount_edit: true },
+    });
+    if (!editableLink || editableLink.expires_at < new Date()) {
+      return res.status(403).json({ message: "Редагування суми недоступне" });
+    }
+
+    const payment = await Payment.findOne({
+      where: { link_id: linkId },
+      include: [{ model: Company }],
+    });
+    if (!payment) {
+      return res.status(404).json({ message: "Платеж не найден" });
+    }
+
+    const { commissionPercent, commissionFixed, finalAmount } =
+      calculateCommission(payment.Company, requestedAmount);
+
+    await payment.update({
+      amount: requestedAmount,
+      commission_percent: commissionPercent,
+      commission_fixed: commissionFixed,
+    });
+
+    await editableLink.update({ amount: requestedAmount });
+
+    await GenerationHistory.update(
+      {
+        amount: requestedAmount,
+        commission_percent: commissionPercent,
+        commission_fixed: commissionFixed,
+        final_amount: finalAmount,
+      },
+      { where: { link_id: linkId, status: "success" } }
+    );
+
+    return res.json({
+      ok: true,
+      amount: requestedAmount,
+      commissionPercent,
+      commissionFixed,
+      finalAmount,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Внутренняя ошибка сервера" });
+  }
+};
 
 module.exports = paymentController;

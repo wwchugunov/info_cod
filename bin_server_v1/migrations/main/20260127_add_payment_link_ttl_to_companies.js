@@ -1,12 +1,21 @@
+const { DataTypes } = require("sequelize");
+
 module.exports = {
-  up: async (queryInterface, Sequelize) => {
-    await queryInterface.addColumn("companies", "payment_link_ttl_minutes", {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-      defaultValue: 24 * 60,
-    });
+  async up({ queryInterface, transaction }) {
+    await queryInterface.addColumn(
+      "companies",
+      "payment_link_ttl_minutes",
+      {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 24 * 60,
+      },
+      { transaction }
+    );
   },
-  down: async (queryInterface) => {
-    await queryInterface.removeColumn("companies", "payment_link_ttl_minutes");
+  async down({ queryInterface, transaction }) {
+    await queryInterface.removeColumn("companies", "payment_link_ttl_minutes", {
+      transaction,
+    });
   },
 };

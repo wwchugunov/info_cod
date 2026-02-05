@@ -78,6 +78,7 @@ async function createPayment(
   const { commissionPercent, commissionFixed, finalAmount } =
     calculateCommission(company, normalizedAmount);
   const linkId = uuidv4();
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   await Payment.create({
     company_id: company.id,
@@ -90,7 +91,7 @@ async function createPayment(
     link_id: linkId,
     status: "pending",
     client_ip,
-    expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    expires_at: expiresAt,
   });
 
   if (dailyLimitEnabled && Number.isFinite(dailyLimit) && dailyLimit > 0) {
@@ -134,6 +135,8 @@ async function createPayment(
     commissionFixed,
     finalAmount,
     linkId: buildPaymentLink(linkId),
+    linkUuid: linkId,
+    expiresAt,
     qr_link: linkId,
     qrlink,
   };

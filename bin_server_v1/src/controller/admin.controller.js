@@ -15,6 +15,7 @@ const { canExposeSensitive } = require("../utils/sensitiveExposure");
 const { logGenerationHistory } = require("../service/generationHistory.service");
 const ErrorLog = require("../admin/model/errorLog.model");
 const SystemMetric = require("../admin/model/systemMetric.model");
+const { createEditablePaymentLink } = require("../modules/editablePaymentLinks/service");
 
 function parsePagination(query) {
   const page = Math.max(Number(query.page) || 1, 1);
@@ -786,19 +787,48 @@ adminController.generateCompanyPayment = async (req, res) => {
     return res.status(404).json({ message: "Компанія не знайдена" });
   }
   const { amount, purpose } = req.body || {};
+  const normalizedPurpose =
+    typeof purpose === "string" ? purpose.trim() : purpose || null;
+  const requestedAllowAmountEdit = Boolean(req.body?.allowAmountEdit);
   try {
     const paymentInfo = await paymentService.createPayment(
       company,
       Number(amount),
-      purpose,
+      normalizedPurpose,
       company.iban,
       req.ip,
       req.headers["user-agent"],
       null
     );
+    let allowAmountEdit = false;
+    let warning = null;
+    if (requestedAllowAmountEdit) {
+      try {
+        const paymentLinkId = paymentInfo.linkUuid || paymentInfo.qr_link || null;
+        await createEditablePaymentLink({
+          company,
+          amount: paymentInfo.originalAmount,
+          purpose: normalizedPurpose,
+          allowAmountEdit: true,
+          linkId: paymentLinkId,
+          expiresAt: paymentInfo.expiresAt,
+        });
+        allowAmountEdit = true;
+      } catch (error) {
+        allowAmountEdit = false;
+        console.error("Failed to enable editable link:", error?.message || error);
+        warning =
+          "Редагування суми недоступне: перевірте, що застосована міграція MAIN DB `20260205_create_editable_payment_links.js` (npm run migrate:main) і сервер перезапущений.";
+      }
+    }
     return res.status(201).json({
       message: "Successfully",
       payment: paymentInfo,
+      options: {
+        static: !allowAmountEdit,
+      },
+      allowAmountEdit,
+      ...(warning ? { warning } : {}),
     });
   } catch (err) {
     await logGenerationHistory({
@@ -806,7 +836,7 @@ adminController.generateCompanyPayment = async (req, res) => {
       tokenHash: null,
       status: "failed",
       amount: Number.isFinite(Number(amount)) ? Number(amount) : null,
-      purpose: typeof purpose === "string" ? purpose.trim() : null,
+      purpose: normalizedPurpose,
       clientIp: req.ip,
       userAgent: req.headers["user-agent"] || null,
       errorCode: err?.code || "GENERATE_FAILED",

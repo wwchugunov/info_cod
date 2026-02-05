@@ -16,6 +16,7 @@ export default function PaymentLinkGenerator() {
   const [purpose, setPurpose] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [warning, setWarning] = useState("");
   const [payment, setPayment] = useState(null);
   const [companyIdInput, setCompanyIdInput] = useState("");
   const { company_id, role } = useAdminInfo();
@@ -24,6 +25,8 @@ export default function PaymentLinkGenerator() {
   const [historyError, setHistoryError] = useState("");
   const [historyPage, setHistoryPage] = useState(1);
   const [historyTotal, setHistoryTotal] = useState(0);
+  const [allowAmountEdit, setAllowAmountEdit] = useState(false);
+  const [paymentOptions, setPaymentOptions] = useState(null);
   const apiBaseUrl = (import.meta.env.VITE_API_BASE || "/api").replace(/\/+$/, "");
 
   const normalizedAmount = Number(amount);
@@ -85,6 +88,8 @@ export default function PaymentLinkGenerator() {
       return;
     }
     setError("");
+    setWarning("");
+    setPaymentOptions(null);
     setLoading(true);
     try {
       const res = await api.post(
@@ -92,9 +97,13 @@ export default function PaymentLinkGenerator() {
         {
           amount: normalizedAmount,
           purpose: purpose.trim(),
+          allowAmountEdit,
         }
       );
+      const responseAllowAmountEdit = Boolean(res.data?.allowAmountEdit);
       setPayment(res.data?.payment || null);
+      setPaymentOptions({ static: res.data?.options?.static ?? !responseAllowAmountEdit });
+      setWarning(res.data?.warning || "");
       setHistoryPage(1);
       if (hasCompanyContext) {
         fetchHistory(resolvedCompanyId, 1);
@@ -191,6 +200,14 @@ export default function PaymentLinkGenerator() {
               onChange={(e) => setAmount(e.target.value)}
             />
           </label>
+          <label className="field" style={{ alignItems: "center" }}>
+            <input
+              type="checkbox"
+              checked={allowAmountEdit}
+              onChange={(e) => setAllowAmountEdit(e.target.checked)}
+            />
+            <span style={{ marginLeft: 10 }}>Редагується сума</span>
+          </label>
           <label className="field">
             Призначення
             <input
@@ -206,6 +223,11 @@ export default function PaymentLinkGenerator() {
             </div>
           ) : null}
           {error ? <div className="form-hint" style={{ color: "#b3261e" }}>{error}</div> : null}
+          {warning ? (
+            <div className="form-hint" style={{ color: "#8a5600" }}>
+              {warning}
+            </div>
+          ) : null}
           <div className="modal-actions">
             <button className="button" type="submit" disabled={!canSubmit}>
               {loading ? "Створюємо..." : "Згенерувати"}
@@ -243,16 +265,20 @@ export default function PaymentLinkGenerator() {
                 style={{ height: 120 }}
               />
             </div>
-            <div className="field" style={{ display: "flex", gap: 12 }}>
-              <div>
-                <div style={{ fontSize: 12, color: "#6e6a67" }}>Комісія</div>
-                <strong>{formatMoney(commission)}</strong>
-              </div>
-              <div>
-                <div style={{ fontSize: 12, color: "#6e6a67" }}>До сплати</div>
-                <strong>{formatMoney(payment.finalAmount)}</strong>
-              </div>
-            </div>
+        <div className="field" style={{ display: "flex", gap: 12 }}>
+          <div>
+            <div style={{ fontSize: 12, color: "#6e6a67" }}>Комісія</div>
+            <strong>{formatMoney(commission)}</strong>
+          </div>
+          <div>
+            <div style={{ fontSize: 12, color: "#6e6a67" }}>До сплати</div>
+            <strong>{formatMoney(payment.finalAmount)}</strong>
+          </div>
+        </div>
+        <div className="field">
+          Статична сума
+          <strong>{paymentOptions?.static ? "Так" : "Ні"}</strong>
+        </div>
             <div className="modal-actions" style={{ marginTop: 16 }}>
               <button className="button secondary" type="button" onClick={() => setPayment(null)}>
                 Згенерувати ще
