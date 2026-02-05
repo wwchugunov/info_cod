@@ -132,6 +132,8 @@ router.post(
   adminController.createCompanyAdmin
 );
 
+
+
 router.get("/admin-users", requireAdmin(["superadmin"]), adminUsersController.list);
 router.post("/admin-users", requireAdmin(["superadmin"]), adminUsersController.create);
 router.patch("/admin-users/:id", requireAdmin(["superadmin"]), adminUsersController.update);

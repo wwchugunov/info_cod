@@ -105,6 +105,7 @@ app.use((req, res, next) => {
 });
 app.use(recordRequestMetrics);
 const adminDistPath = path.join(__dirname, '../../admin_panel/dist');
+const landingDistPath = path.resolve(__dirname, '../../landing');
 app.use(
   '/admin',
   express.static(adminDistPath, {
@@ -129,8 +130,10 @@ app.use(
 );
 
 app.get('/', (req, res) => {
-  res.render('index');
+  res.sendFile(path.join(landingDistPath, 'index.html'));
 });
+
+app.use(express.static(landingDistPath));
 
 
 

@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>InfoKod — QR‑платежі за IBAN</title>
+    <meta name="description" content="Готова сторінка про QR-платежі InfoKod із секціями, анімаціями та модальним CTA." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="index.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="site-header">
+        <div class="container site-header__inner">
+          <a class="brand" href="#hero">
+            <span class="logo" aria-hidden="true"></span>
+            InfoKod
+          </a>
+          <nav class="nav" aria-label="Головна навігація">
+            <a href="#product">Продукт</a>
+            <a href="#how">Як працює</a>
+            <a href="#analytics">Аналітика</a>
+            <a href="#security">Безпека</a>
+          </nav>
+          <div class="actions">
+            <button class="btn btn--primary" data-open-modal>Підключити</button>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero" id="hero">
+          <div class="container hero__grid">
+            <div class="hero__content">
+              <p class="tag">QR‑платежі InfoKod</p>
+              <h1>Приймайте оплату без карток і реквізитів за 10 секунд</h1>
+            <p class="lede">
+              Єдина сторінка QR-платежу: клієнт сканує код, обирає банк і підтверджує платіж у звичному застосунку.
+              Жодних помилок, жодного ручного введення реквізитів.
+            </p>
+            <div class="hero__actions">
+              <button class="btn btn--primary" data-open-modal>Підключити</button>
+              <a class="btn btn--ghost" href="#product">Детальніше</a>
+            </div>
+          </div>
+          <div class="hero__panel">
+              <div class="panel__header">
+                <span>Аналітика</span>
+              <strong>99.9%</strong>
+            </div>
+              <div class="panel__chart">
+                <div class="chart__bar" style="height: 65%"></div>
+                <div class="chart__bar" style="height: 85%"></div>
+                <div class="chart__bar" style="height: 50%"></div>
+                <div class="chart__bar" style="height: 72%"></div>
+                <div class="chart__bar" style="height: 95%"></div>
+              </div>
+              <ul class="panel__stats">
+                <li><span class="stat__label">Сканувань</span><strong>12 480</strong></li>
+                <li><span class="stat__label">Сума</span><strong>₴ 3.2M</strong></li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="section split section--card" id="product">
+          <div class="split__panel">
+            <h2>Генерація платіжних посилань</h2>
+            <p>
+              Створюйте посилання через API або адмінку — у ньому вже вказані IBAN, сума та призначення.
+              Клієнт підтверджує платіж у своєму банку, а ви бачите подію в аналітиці.
+            </p>
+            <div class="split__actions">
+              <button class="btn">API-інтеграція</button>
+              <button class="btn">Адмін-кабінет</button>
+            </div>
+          </div>
+          <div class="split__panel frame frame--padded">
+            <div class="mock-card">
+              <span class="mock-title">Посилання #A91F</span>
+              <strong>₴ 12 400</strong>
+              <p>Сканувань: 48 · Успішних: 99.9%</p>
+              <button class="btn btn--ghost">Скопіювати посилання</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="section timeline section--alt" id="how">
+          <div class="timeline__header">
+            <h2>Як підключитися</h2>
+            <p>Прості чотири кроки — від заявки до перших платежів.</p>
+          </div>
+          <div class="timeline__steps">
+            <article>
+              <span class="step">1</span>
+              <h3>Заявка</h3>
+              <p>Натискаєте «Підключити» та надсилаєте заявку.</p>
+            </article>
+            <article>
+              <span class="step">2</span>
+              <h3>Реєстрація</h3>
+              <p>Ми створюємо акаунт і налаштовуємо шаблони.</p>
+            </article>
+            <article>
+              <span class="step">3</span>
+              <h3>Доступ</h3>
+              <p>Ви отримуєте доступ до адмінки і API-ключ.</p>
+            </article>
+            <article>
+              <span class="step">4</span>
+              <h3>Платежі</h3>
+              <p>Генеруєте посилання, контролюєте аналітику та комісії.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section split split--reverse section--card" id="analytics">
+          <div class="split__panel frame frame--padded">
+            <div class="analytics__card">
+              <h2>Аналітика та контроль</h2>
+              <p>Слідкуйте за генерацією, скануванням і оплатами — все в режимі реального часу без ручного обліку.</p>
+              <ul>
+                <li>Генерації</li>
+                <li>Сканування</li>
+                <li>Комісія</li>
+              </ul>
+            </div>
+          </div>
+          <div class="split__panel">
+            <svg viewBox="0 0 520 320" aria-label="График" role="img" class="chart-svg">
+              <rect width="520" height="320" rx="18" fill="#f7f9fe" />
+              <line x1="40" y1="260" x2="480" y2="260" stroke="#e5e7eb" stroke-width="2" />
+              <rect x="80" y="180" width="40" height="80" rx="10" fill="#4f6cf7" opacity="0.8" />
+              <rect x="150" y="140" width="40" height="120" rx="10" fill="#4f6cf7" opacity="0.6" />
+              <rect x="220" y="100" width="40" height="160" rx="10" fill="#22c55e" opacity="0.8" />
+              <rect x="290" y="150" width="40" height="110" rx="10" fill="#6ddcff" opacity="0.8" />
+              <rect x="360" y="120" width="40" height="140" rx="10" fill="#4f6cf7" opacity="0.9" />
+            </svg>
+          </div>
+        </section>
+
+        <section class="section security section--card" id="security">
+          <div>
+            <h2>Безпека та відповідність</h2>
+            <p>
+              Ми не зберігаємо дані карток, а платежі проходять безпосередньо через банки клієнтів.
+              Це знижує ризики і полегшує відповідність вимогам регуляторів.
+            </p>
+            <div class="security__list">
+              <span class="pill">Без зберігання карт</span>
+              <span class="pill">Оплата у банку клієнта</span>
+              <span class="pill">Відповідність НБУ</span>
+            </div>
+          </div>
+          <div class="security__panel frame frame--padded">
+            <svg viewBox="0 0 520 280" aria-label="Щит" role="img">
+              <rect width="520" height="280" rx="28" fill="#f7f9fe" />
+              <circle cx="260" cy="140" r="70" fill="#fff" stroke="rgba(15,23,42,.08)" stroke-width="2" />
+              <path d="M260 90l44 22v28c0 30-24 56-44 60-20-4-44-30-44-60v-28z" fill="#22c55e" />
+              <path d="M238 154l16 16 28-30" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+        </section>
+
+        <section class="section cta" aria-labelledby="cta-title">
+          <div class="cta__content">
+            <h2 id="cta-title">Готові приймати QR-платежі?</h2>
+            <p>Увесь процес без складних інтеграцій. Перші платежі — одразу після доступу.</p>
+          </div>
+          <div class="cta__actions">
+            <button class="btn btn--primary" data-open-modal>Підключити</button>
+            <a class="btn btn--ghost" href="mailto:sales@infokod.com.ua">Надіслати лист</a>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <div class="container footer__inner">
+          <span>© InfoKod, 2026</span>
+          <span>QR‑платежі за IBAN • Фінтех‑рішення для бізнесу</span>
+        </div>
+      </footer>
+    </div>
+
+    <div class="modal-backdrop" id="connectModal" aria-modal="true" role="dialog" aria-labelledby="modal-title">
+      <div class="modal">
+        <h3 id="modal-title">Підключення до InfoKod</h3>
+        <p>Напишіть на sales@infokod.com.ua, і ми відповімо протягом дня.</p>
+        <div class="modal__actions">
+          <button class="btn" data-close-modal type="button">Закрити</button>
+          <a class="btn btn--primary" href="mailto:sales@infokod.com.ua">Надіслати лист</a>
+        </div>
+      </div>
+    </div>
+
+    <script src="index.js"></script>
+  </body>
+</html>
