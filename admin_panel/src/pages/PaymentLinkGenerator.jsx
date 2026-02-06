@@ -124,7 +124,7 @@ export default function PaymentLinkGenerator() {
     if (!text) return;
     try {
       await navigator.clipboard?.writeText(text);
-    } catch (err) {
+    } catch {
       // ignore silently
     }
   };

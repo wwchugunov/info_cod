@@ -7,7 +7,7 @@ async function sendError(payload) {
   isSending = true;
   try {
     await api.post("/admin/errors/client", payload);
-  } catch (err) {
+  } catch {
     // ignore logging errors
   } finally {
     isSending = false;

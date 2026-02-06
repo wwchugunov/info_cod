@@ -2,36 +2,29 @@ import { useEffect, useState } from "react";
 import api from "../services/api";
 import { decodeJwt, getAccessToken, isTokenAuthMode } from "../services/auth";
 export default function useAdminInfo() {
-  const [info, setInfo] = useState({
-    role: "",
-    email: "",
-    company_id: null,
-    permissions: {},
-    isAuthenticated: false,
-    isLoading: true,
+  const [info, setInfo] = useState(() => {
+    const base = {
+      role: "",
+      email: "",
+      company_id: null,
+      permissions: {},
+      isAuthenticated: false,
+      isLoading: true,
+    };
+    if (!isTokenAuthMode()) return base;
+    const token = getAccessToken();
+    const payload = decodeJwt(token);
+    if (!payload) return base;
+    return {
+      ...base,
+      role: payload?.role || "",
+      email: payload?.email || "",
+      company_id: payload?.company_id ?? null,
+      isAuthenticated: true,
+    };
   });
 
   useEffect(() => {
-    if (isTokenAuthMode()) {
-      const token = getAccessToken();
-      const payload = decodeJwt(token);
-      if (payload) {
-        setInfo((prev) => ({
-          ...prev,
-          role: payload?.role || "",
-          email: payload?.email || "",
-          company_id: payload?.company_id ?? null,
-          isAuthenticated: true,
-        }));
-      } else {
-        setInfo((prev) => ({
-          ...prev,
-          isAuthenticated: false,
-          isLoading: false,
-        }));
-      }
-    }
-
     api
       .get("/admin/auth/me")
       .then((res) => {

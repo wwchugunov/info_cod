@@ -12,10 +12,11 @@ module.exports = {
     {
       name: "admin_panel",
       cwd: "/home/admin_panel",
-      script: "npm",
-      args: "run preview -- --host 0.0.0.0 --port 4173",
+      script: "node",
+      args: "scripts/serve-dist.js",
       env: {
         NODE_ENV: "production",
+        PORT: 4173,
       },
     },
   ],

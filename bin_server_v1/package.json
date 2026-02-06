@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "node --test",
+    "test": "node --test test",
     "migrate": "node scripts/migrate.js --db=all",
     "migrate:main": "node scripts/migrate.js --db=main",
     "migrate:admin": "node scripts/migrate.js --db=admin",

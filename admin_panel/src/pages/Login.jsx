@@ -21,7 +21,7 @@ export default function Login() {
         setTokens(res.data || {});
       }
       navigate("/dashboard");
-    } catch (err) {
+    } catch {
       setError("Невірні дані для входу");
     }
   };

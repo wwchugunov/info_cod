@@ -38,7 +38,7 @@ export default function Settings() {
       } else {
         await api.post("/admin/auth/logout");
       }
-    } catch (err) {
+    } catch {
       // ignore logout errors
     }
     clearTokens();

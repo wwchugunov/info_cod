@@ -53,11 +53,6 @@ export default function History({
   };
 
   useEffect(() => {
-    setTypeFilter(fixedType);
-    setPage(1);
-  }, [fixedType]);
-
-  useEffect(() => {
     load();
   }, [page, effectiveType]);
 

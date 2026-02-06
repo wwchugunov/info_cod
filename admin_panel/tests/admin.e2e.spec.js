@@ -85,16 +85,11 @@ test.describe.serial("Admin UI", () => {
       await page.context().clearCookies();
       return;
     }
-    if (authCookies.length) {
-      await page.context().addCookies(
-        authCookies.map((cookie) => ({
-          name: cookie.name,
-          value: cookie.value,
-          url: "http://localhost",
-          path: "/api/admin",
-        }))
-      );
-    }
+    await page.goto("/admin/login");
+    await page.getByPlaceholder("Е-пошта").fill(email);
+    await page.getByPlaceholder("Пароль").fill(password);
+    await page.getByRole("button", { name: "Увійти" }).click();
+    await expect(page).toHaveURL(/\/dashboard/);
   });
 
   test("login screen works", async ({ page }) => {
@@ -222,14 +217,17 @@ test.describe.serial("Admin UI", () => {
       ]);
     }
 
-    await page.getByRole("button", { name: "XLSX" }).click();
+    await page.getByRole("button", { name: "XLSX", exact: true }).click();
     await page.getByRole("button", { name: "PDF з графіком" }).click();
   });
 
   test("history, scans, errors, load", async ({ page }) => {
     await page.goto("/admin/history");
     await page.getByRole("button", { name: "Застосувати" }).click();
-    await page.getByRole("button", { name: "Далі" }).click();
+    const nextButton = page.getByRole("button", { name: "Далі" });
+    if (await nextButton.isEnabled()) {
+      await nextButton.click();
+    }
 
     await page.goto("/admin/scans");
     await page.getByRole("button", { name: "Застосувати" }).click();
