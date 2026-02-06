@@ -5,7 +5,18 @@ import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const distDir = path.resolve(__dirname, "..", "dist");
+const distDir = (() => {
+  const raw = process.env.DIST_DIR;
+  if (!raw) {
+    return path.resolve(__dirname, "..", "dist");
+  }
+  return path.isAbsolute(raw) ? raw : path.resolve(__dirname, "..", raw);
+})();
+const basePath = (() => {
+  const raw = (process.env.BASE_PATH || "/admin").trim() || "/admin";
+  const withSlash = raw.startsWith("/") ? raw : `/${raw}`;
+  return withSlash.replace(/\/+$/, "");
+})();
 const port = Number(process.env.PORT) || 4173;
 
 const mimeTypes = {
@@ -43,17 +54,17 @@ const server = http.createServer((req, res) => {
   const rawPath = decodeURIComponent((req.url || "/").split("?")[0]);
 
   if (rawPath === "/" || rawPath === "") {
-    res.writeHead(302, { Location: "/admin/" });
+    res.writeHead(302, { Location: `${basePath}/` });
     res.end();
     return;
   }
 
-  if (!rawPath.startsWith("/admin")) {
+  if (!rawPath.startsWith(basePath)) {
     send(res, 404, "Not found");
     return;
   }
 
-  let relPath = rawPath.replace(/^\/admin/, "");
+  let relPath = rawPath.slice(basePath.length);
   if (relPath === "" || relPath === "/") {
     relPath = "/index.html";
   }

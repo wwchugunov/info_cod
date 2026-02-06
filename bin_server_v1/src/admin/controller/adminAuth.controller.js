@@ -36,6 +36,13 @@ function getCookie(req, name) {
   return "";
 }
 
+function getAdminApiPrefix() {
+  const raw = String(process.env.ADMIN_API_PREFIX || "/api").trim();
+  if (!raw) return "/api";
+  const withSlash = raw.startsWith("/") ? raw : `/${raw}`;
+  return withSlash.replace(/\/+$/, "");
+}
+
 function cookieOptions(req) {
   const allowInsecure =
     String(process.env.ADMIN_COOKIE_INSECURE || "").toLowerCase() === "true";
@@ -49,7 +56,7 @@ function cookieOptions(req) {
     httpOnly: true,
     secure: Boolean(isSecure),
     sameSite: "lax",
-    path: "/api/admin",
+    path: `${getAdminApiPrefix()}/admin`,
   };
 }
 

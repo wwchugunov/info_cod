@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:demo": "vite build --outDir dist-demo",
+    "build:intestingonly": "VITE_BASE=/demo/ VITE_ROUTER_BASE=/demo VITE_API_BASE=/demo/api vite build --outDir dist-intestingonly",
     "lint": "eslint .",
     "preview": "vite preview"
   },
