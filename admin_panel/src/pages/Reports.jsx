@@ -46,38 +46,35 @@ export default function Reports() {
     loadMetrics();
   }, []);
 
-  const downloadCsv = async (path, filename, encoding) => {
+  const fetchAll = async (path) => {
+    const limit = 200;
+    let page = 1;
+    let items = [];
+    while (true) {
+      const res = await api.get(path, { params: { ...buildParams(), page, limit } });
+      const next = res.data.items || [];
+      items = items.concat(next);
+      if (next.length < limit) break;
+      page += 1;
+    }
+    return items;
+  };
+
+  const downloadXlsx = async (path, filename, sheetName) => {
     if (!canDownload) return;
-    const res = await api.get(path, {
-      params: { ...buildParams(), ...(encoding ? { encoding } : {}) },
-      responseType: "blob",
+    const items = await fetchAll(path);
+    const wb = XLSX.utils.book_new();
+    const sheet = XLSX.utils.json_to_sheet(items);
+    XLSX.utils.book_append_sheet(wb, sheet, sheetName);
+    XLSX.writeFile(wb, filename, {
+      bookType: "xlsx",
+      compression: true,
+      cellStyles: true,
     });
-    const url = URL.createObjectURL(res.data);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
   };
 
   const exportXlsx = async () => {
     if (!canDownload) return;
-    const fetchAll = async (path) => {
-      const limit = 200;
-      let page = 1;
-      let items = [];
-      while (true) {
-        const res = await api.get(path, { params: { ...buildParams(), page, limit } });
-        const next = res.data.items || [];
-        items = items.concat(next);
-        if (next.length < limit) break;
-        page += 1;
-      }
-      return items;
-    };
-
     const [companies, history, scans] = await Promise.all([
       fetchAll("/admin/companies"),
       fetchAll("/admin/generation-history"),
@@ -113,7 +110,7 @@ export default function Reports() {
 
   return (
     <div className="main-area">
-      <Topbar title="Звіти" subtitle="Експорт CSV / XLSX / PDF" />
+      <Topbar title="Звіти" subtitle="Експорт XLSX / PDF" />
       <div className="section" style={{ marginBottom: 16 }}>
         <div className="filter-row">
           <input
@@ -145,45 +142,45 @@ export default function Reports() {
       <div className="card-grid" style={{ marginBottom: 16 }}>
         <div className="card">
           <h3>Компанії</h3>
-          <p style={{ color: "#6e6a67" }}>CSV вивантаження</p>
+          <p style={{ color: "#6e6a67" }}>XLSX вивантаження</p>
           <button
             className="button"
             onClick={() =>
-              downloadCsv("/admin/export/companies.csv", "companies.csv", "utf-16le")
+              downloadXlsx("/admin/companies", "companies.xlsx", "Companies")
             }
             disabled={!canDownload}
           >
-            Завантажити CSV
+            Завантажити XLSX
           </button>
         </div>
         <div className="card">
           <h3>Історія генерацій</h3>
-          <p style={{ color: "#6e6a67" }}>CSV вивантаження</p>
+          <p style={{ color: "#6e6a67" }}>XLSX вивантаження</p>
           <button
             className="button"
             onClick={() =>
-              downloadCsv(
-                "/admin/export/generation-history.csv",
-                "generation-history.csv",
-                "utf-16le"
+              downloadXlsx(
+                "/admin/generation-history",
+                "generation-history.xlsx",
+                "GenerationHistory"
               )
             }
             disabled={!canDownload}
           >
-            Завантажити CSV
+            Завантажити XLSX
           </button>
         </div>
         <div className="card">
           <h3>Історія сканувань</h3>
-          <p style={{ color: "#6e6a67" }}>CSV вивантаження</p>
+          <p style={{ color: "#6e6a67" }}>XLSX вивантаження</p>
           <button
             className="button"
             onClick={() =>
-              downloadCsv("/admin/export/scan-history.csv", "scan-history.csv", "utf-16le")
+              downloadXlsx("/admin/scan-history", "scan-history.xlsx", "ScanHistory")
             }
             disabled={!canDownload}
           >
-            Завантажити CSV
+            Завантажити XLSX
           </button>
         </div>
       </div>

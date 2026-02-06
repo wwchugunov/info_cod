@@ -8,6 +8,7 @@ userController.registerCompany = async (req, res) => {
     const {
       company,
       apiTokenPlain,
+      apiTokenPreview,
       isSubCompany,
       parentCompanyId,
     } = await companyService.registerCompany(req.body);
@@ -21,6 +22,8 @@ userController.registerCompany = async (req, res) => {
         contact_name: company.contact_name,
         contact_phone: company.contact_phone,
         api_token: expose ? apiTokenPlain : null,
+        api_token_preview: apiTokenPreview || null,
+        token_is_preview: !expose,
         ip_whitelist: company.ip_whitelist || [],
         daily_limit: company.daily_limit,
         commission_percent: Number(company.commission_percent || 0),

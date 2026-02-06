@@ -213,7 +213,7 @@ test.describe.serial("Admin UI", () => {
     await page.goto("/admin/reports");
     await page.getByRole("button", { name: "Застосувати" }).click();
 
-    const downloadButtons = page.getByRole("button", { name: "Завантажити CSV" });
+    const downloadButtons = page.getByRole("button", { name: "Завантажити XLSX" });
     const count = await downloadButtons.count();
     for (let i = 0; i < count; i += 1) {
       await Promise.all([

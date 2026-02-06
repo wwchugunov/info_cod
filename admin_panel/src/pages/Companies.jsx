@@ -908,8 +908,16 @@ export default function Companies() {
                     color: "#1c1a19",
                   }}
                 >
-                  {registration.api_token || "Токен не повертається в прод"}
+                  {registration.api_token ||
+                    registration.api_token_preview ||
+                    "Токен не повертається в прод"}
                 </div>
+                {(registration.token_is_preview ||
+                  (!registration.api_token && Boolean(registration.api_token_preview))) ? (
+                  <div className="muted-text" style={{ marginTop: 6 }}>
+                    Показано маскований токен
+                  </div>
+                ) : null}
               </div>
               <div className="field">
                 Логін

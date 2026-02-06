@@ -7,14 +7,26 @@ const { logGenerationHistory } = require("../service/generationHistory.service")
 const { logScanHistory } = require("../service/scanHistory.service");
 const { logBankHistory } = require("../service/bankHistory.service");
 const EditablePaymentLink = require("../modules/editablePaymentLinks/model");
+const { createEditablePaymentLink } = require("../modules/editablePaymentLinks/service");
 const GenerationHistory = require("../model/generationHistory.model");
 
 const paymentController = {};
+
+function parseAllowAmountEdit(value) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return ["true", "1", "yes", "y", "on"].includes(normalized);
+  }
+  return false;
+}
 
 paymentController.generatePayment = async (req, res) => {
   try {
     const { amount, purpose } = req.body || {};
     const company = req.company;
+    const requestedAllowAmountEdit = parseAllowAmountEdit(req.body?.allowAmountEdit);
 
     if (!amount || !purpose) {
       return res
@@ -32,9 +44,36 @@ paymentController.generatePayment = async (req, res) => {
       req.tokenHash
     );
 
+    let allowAmountEdit = false;
+    let warning = null;
+    if (requestedAllowAmountEdit) {
+      try {
+        const paymentLinkId = paymentInfo.linkUuid || paymentInfo.qr_link || null;
+        await createEditablePaymentLink({
+          company,
+          amount: paymentInfo.originalAmount,
+          purpose,
+          allowAmountEdit: true,
+          linkId: paymentLinkId,
+          expiresAt: paymentInfo.expiresAt,
+        });
+        allowAmountEdit = true;
+      } catch (error) {
+        allowAmountEdit = false;
+        console.error("Failed to enable editable link:", error?.message || error);
+        warning =
+          "Редагування суми недоступне: перевірте, що застосована міграція MAIN DB `20260205_create_editable_payment_links.js` (npm run migrate:main) і сервер перезапущений.";
+      }
+    }
+
     res.status(201).json({
       message: "Successfully",
       payment: paymentInfo,
+      options: {
+        static: !allowAmountEdit,
+      },
+      allowAmountEdit,
+      ...(warning ? { warning } : {}),
     });
   } catch (err) {
     await logGenerationHistory({
@@ -65,8 +104,8 @@ paymentController.getPaymentByLink = async (req, res) => {
       include: [{ model: Company }],
     });
 
-    // Если платежа нет или ссылка истекла
-    if (!payment || payment.expires_at < new Date()) {
+    // Если платежа нет, компания отсутствует или ссылка истекла
+    if (!payment || !payment.Company || payment.expires_at < new Date()) {
       return res.render("no-payment"); // Рендерим шаблон ошибки
     }
 

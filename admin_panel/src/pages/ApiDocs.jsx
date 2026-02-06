@@ -7,6 +7,8 @@ export default function ApiDocs() {
   const { role, company_id, permissions = {} } = useAdminInfo();
   const [companyId, setCompanyId] = useState("");
   const [token, setToken] = useState("");
+  const [tokenIsPreview, setTokenIsPreview] = useState(false);
+  const [revealLoading, setRevealLoading] = useState(false);
   const [tokens, setTokens] = useState([]);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,13 +19,28 @@ export default function ApiDocs() {
 
   const canRotate = role === "superadmin" || Boolean(permissions.token_generate);
 
+  const extractToken = (data) => {
+    const full = data?.api_token || "";
+    const preview = data?.api_token_preview || "";
+    if (full) {
+      return { value: full, isPreview: false };
+    }
+    if (preview) {
+      return { value: preview, isPreview: true };
+    }
+    return { value: "", isPreview: false };
+  };
+
   const loadToken = async (id) => {
     if (!id) return;
     try {
       const res = await api.get(`/admin/companies/${id}/token`);
-      setToken(res.data.api_token || "");
+      const extracted = extractToken(res.data);
+      setToken(extracted.value);
+      setTokenIsPreview(extracted.isPreview);
     } catch (err) {
       setToken("");
+      setTokenIsPreview(false);
       if (err?.response?.status === 403) {
         setStatus("Доступ до токенів вимкнено в прод середовищі.");
       }
@@ -32,7 +49,8 @@ export default function ApiDocs() {
 
   const loadTokens = async () => {
     try {
-      const res = await api.get("/admin/companies/tokens");
+      const params = canRotate ? { reveal: "1" } : undefined;
+      const res = await api.get("/admin/companies/tokens", { params });
       setTokens(res.data.items || []);
     } catch (err) {
       setTokens([]);
@@ -68,8 +86,14 @@ export default function ApiDocs() {
     setStatus("");
     try {
       const res = await api.post(`/admin/companies/${companyId}/token`);
-      setToken(res.data.api_token || "");
-      setStatus("Новий токен згенеровано. Збережіть його.");
+      const extracted = extractToken(res.data);
+      setToken(extracted.value);
+      setTokenIsPreview(extracted.isPreview);
+      setStatus(
+        extracted.isPreview
+          ? "Новий токен згенеровано. Повний токен не відображається в прод середовищі."
+          : "Новий токен згенеровано. Збережіть його."
+      );
       loadTokens();
     } catch (err) {
       const message =
@@ -77,6 +101,35 @@ export default function ApiDocs() {
       setStatus(message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const revealToken = async () => {
+    if (!companyId) {
+      setStatus("Вкажіть ID компанії.");
+      return;
+    }
+    setRevealLoading(true);
+    setStatus("");
+    try {
+      const res = await api.get(`/admin/companies/${companyId}/token`, {
+        params: { reveal: "1" },
+      });
+      const extracted = extractToken(res.data);
+      setToken(extracted.value);
+      setTokenIsPreview(extracted.isPreview);
+      if (extracted.isPreview) {
+        setStatus("Розкриття токенів вимкнено в прод середовищі.");
+      } else {
+        setStatus("Токен отримано.");
+      }
+      loadTokens();
+    } catch (err) {
+      const message =
+        err?.response?.data?.message || "Не вдалося отримати токен";
+      setStatus(message);
+    } finally {
+      setRevealLoading(false);
     }
   };
 
@@ -102,11 +155,26 @@ export default function ApiDocs() {
           >
             {loading ? "Генерація..." : "Згенерувати токен"}
           </button>
+          {canRotate ? (
+            <button
+              className="button secondary"
+              onClick={revealToken}
+              disabled={revealLoading}
+            >
+              {revealLoading ? "Отримуємо..." : "Показати токен"}
+            </button>
+          ) : null}
         </div>
         {tokens.length > 1 ? (
           <div className="card-grid" style={{ marginTop: 12 }}>
-            {tokens.map((item) => (
-              <div className="card" key={item.id}>
+            {tokens.map((item) => {
+              const displayToken = item.api_token || item.api_token_preview || "";
+              const isPreview =
+                Boolean(item.token_is_preview) ||
+                (!item.api_token && Boolean(item.api_token_preview));
+              const isMissing = Boolean(item.token_missing);
+              return (
+                <div className="card" key={item.id}>
                 <h3>
                   {item.name || "Компанія"} #{item.id}
                 </h3>
@@ -121,22 +189,34 @@ export default function ApiDocs() {
                     marginTop: 8,
                   }}
                 >
-                  {item.api_token || "—"}
+                  {displayToken || "—"}
                 </div>
+                {isPreview ? (
+                  <div className="muted-text" style={{ marginTop: 6 }}>
+                    Показано маскований токен
+                  </div>
+                ) : null}
+                {isMissing ? (
+                  <div className="muted-text" style={{ marginTop: 6 }}>
+                    Токен не збережено. Попросіть компанію зробити API‑запит або
+                    згенеруйте новий токен.
+                  </div>
+                ) : null}
                 <button
                   className="button secondary"
                   style={{ marginTop: 8 }}
                   onClick={() =>
-                    navigator.clipboard?.writeText(item.api_token || "")
+                    navigator.clipboard?.writeText(displayToken || "")
                   }
-                  disabled={!item.api_token}
+                  disabled={!displayToken || isPreview || isMissing}
                 >
                   Скопіювати
                 </button>
               </div>
-            ))}
+              );
+            })}
           </div>
-        ) : (tokens[0]?.api_token || token) ? (
+        ) : (tokens[0]?.api_token || tokens[0]?.api_token_preview || token) ? (
           <div
             style={{
               background: "#f6f2ea",
@@ -148,12 +228,33 @@ export default function ApiDocs() {
               marginTop: 8,
             }}
           >
-            {tokens[0]?.api_token || token}
+            {tokens[0]?.api_token || tokens[0]?.api_token_preview || token}
+            {(Boolean(tokens[0]?.token_is_preview) ||
+              (!tokens[0]?.api_token && Boolean(tokens[0]?.api_token_preview)) ||
+              tokenIsPreview) ? (
+              <div className="muted-text" style={{ marginTop: 6 }}>
+                Показано маскований токен
+              </div>
+            ) : null}
+            {tokens[0]?.token_missing ? (
+              <div className="muted-text" style={{ marginTop: 6 }}>
+                Токен не збережено. Попросіть компанію зробити API‑запит або
+                згенеруйте новий токен.
+              </div>
+            ) : null}
             <button
               className="button secondary"
               style={{ marginTop: 8 }}
               onClick={() =>
-                navigator.clipboard?.writeText(tokens[0]?.api_token || token)
+                navigator.clipboard?.writeText(
+                  tokens[0]?.api_token || tokens[0]?.api_token_preview || token
+                )
+              }
+              disabled={
+                Boolean(tokens[0]?.token_is_preview) ||
+                (!tokens[0]?.api_token && Boolean(tokens[0]?.api_token_preview)) ||
+                tokenIsPreview ||
+                Boolean(tokens[0]?.token_missing)
               }
             >
               Скопіювати

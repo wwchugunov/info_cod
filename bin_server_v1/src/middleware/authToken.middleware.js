@@ -3,6 +3,8 @@ const Company = require('../model/company.model');
 const bcrypt = require('bcrypt');
 const crypto = require("crypto");
 const { logGenerationHistory } = require("../service/generationHistory.service");
+const { buildTokenPreview } = require("../utils/tokenPreview");
+const { encryptToken, getEncryptionKey } = require("../utils/tokenCrypto");
 
 async function authToken(req, res, next) {
   try {
@@ -114,11 +116,27 @@ async function authToken(req, res, next) {
         { where: { id: company.id } }
       );
     }
-    if (company && tokenValue && company.api_token_last !== tokenValue) {
-      await Company.update(
-        { api_token_last: tokenValue },
-        { where: { id: company.id } }
-      );
+    const tokenPreview = buildTokenPreview(tokenValue);
+    if (company && tokenPreview) {
+      const updates = {};
+      if (company.api_token_last !== tokenPreview) {
+        updates.api_token_last = tokenPreview;
+      }
+      if (!company.api_token_enc) {
+        try {
+          if (getEncryptionKey()) {
+            updates.api_token_enc = encryptToken(tokenValue);
+          }
+        } catch (_) {
+          // ignore encryption failures to avoid blocking auth
+        }
+      }
+      if (Object.keys(updates).length) {
+        await Company.update(updates, {
+          where: { id: company.id },
+          allowApiTokenUpdate: true,
+        });
+      }
     }
     req.company = await Company.findByPk(company.id);
     req.tokenHash = tokenHash;

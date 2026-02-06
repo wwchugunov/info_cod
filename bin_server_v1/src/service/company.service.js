@@ -5,6 +5,8 @@ const {
   isValidEdrpo,
   normalizeText,
 } = require('./validation.utils');
+const { buildTokenPreview } = require("../utils/tokenPreview");
+const { encryptToken } = require("../utils/tokenCrypto");
 
 function generateApiToken() {
   return crypto.randomBytes(32).toString('hex');
@@ -69,6 +71,8 @@ async function registerCompany(data, options = {}) {
 
   const api_token = generateApiToken();
   const api_token_prefix = api_token.slice(0, 8);
+  const api_token_preview = buildTokenPreview(api_token);
+  const api_token_enc = encryptToken(api_token);
 
   const company = await Company.create({
     name: normalizedName,
@@ -85,7 +89,8 @@ async function registerCompany(data, options = {}) {
     use_percent_commission: use_percent_commission ?? true,
     use_fixed_commission: use_fixed_commission ?? true,
     api_token,
-    api_token_last: api_token,
+    api_token_enc,
+    api_token_last: api_token_preview,
     api_token_prefix,
     turnover: normalizedTurnover ?? 0,
     is_active: is_active ?? true
@@ -94,6 +99,7 @@ async function registerCompany(data, options = {}) {
   return {
     company,
     apiTokenPlain: api_token,
+    apiTokenPreview: api_token_preview,
     isSubCompany: Boolean(parentCandidate),
     parentCompanyId: parentCandidate ? parentCandidate.id : null,
   };

@@ -12,6 +12,8 @@ const companyService = require("../service/company.service");
 const paymentService = require("../service/payment.service");
 const { calculateCommission, getDayRange } = require("../service/payment.utils");
 const { canExposeSensitive } = require("../utils/sensitiveExposure");
+const { buildTokenPreview, ensureTokenPreview } = require("../utils/tokenPreview");
+const { encryptToken, decryptToken } = require("../utils/tokenCrypto");
 const { logGenerationHistory } = require("../service/generationHistory.service");
 const ErrorLog = require("../admin/model/errorLog.model");
 const SystemMetric = require("../admin/model/systemMetric.model");
@@ -238,11 +240,21 @@ async function getScanDuplicateCounts(keys) {
 }
 
 function getCsvEncoding(req) {
-  const raw = String(req.query.encoding || "").toLowerCase();
-  if (raw === "utf16le" || raw === "utf-16le") {
+  const raw = String(req.query.encoding || "").trim().toLowerCase();
+  const normalized = raw.replace(/[^a-z0-9]/g, "");
+  if (normalized === "win1251" || normalized === "cp1251" || normalized === "windows1251") {
+    return { encoding: "win1251", charset: "windows-1251" };
+  }
+  if (normalized === "utf16le" || normalized === "utf16" || normalized === "ucs2") {
     return { encoding: "utf16le", charset: "utf-16le" };
   }
-  return { encoding: "utf16le", charset: "utf-16le" };
+  if (normalized === "utf8bom") {
+    return { encoding: "utf8bom", charset: "utf-8" };
+  }
+  if (normalized === "utf8") {
+    return { encoding: "utf8", charset: "utf-8" };
+  }
+  return { encoding: "win1251", charset: "windows-1251" };
 }
 
 const adminController = {};
@@ -397,13 +409,17 @@ adminController.createCompany = async (req, res) => {
       company_id: company.id,
       password_hash: passwordHash,
     });
+    const canExpose = canExposeSensitive();
+    const apiTokenPreview = buildTokenPreview(apiTokenPlain);
     return res.status(201).json({
       company,
-      api_token: canExposeSensitive() ? apiTokenPlain : null,
+      api_token: canExpose ? apiTokenPlain : null,
+      api_token_preview: apiTokenPreview || null,
+      token_is_preview: !canExpose,
       is_sub_company: isSubCompany,
       parent_company_id: parentCompanyId,
       admin_login: login,
-      admin_password: canExposeSensitive() ? password : null,
+      admin_password: canExpose ? password : null,
     });
   } catch (err) {
     return res.status(400).json({ message: err.message });
@@ -1761,13 +1777,30 @@ adminController.rotateCompanyToken = async (req, res) => {
   if (!company) {
     return res.status(404).json({ message: "Компания не найдена" });
   }
-  const apiToken = companyService.generateApiToken();
+  let apiToken = null;
+  let apiTokenPreview = null;
+  let apiTokenEncrypted = null;
+  try {
+    apiToken = companyService.generateApiToken();
+    apiTokenPreview = buildTokenPreview(apiToken);
+    apiTokenEncrypted = encryptToken(apiToken);
+  } catch (err) {
+    return res.status(500).json({
+      message: err?.message || "Не вдалося згенерувати токен",
+    });
+  }
   company.api_token = apiToken;
-  company.api_token_last = apiToken;
+  company.api_token_enc = apiTokenEncrypted;
+  company.api_token_last = apiTokenPreview;
   company.api_token_prefix = apiToken.slice(0, 8);
   await company.save({ allowApiTokenUpdate: true });
 
-  return res.json({ api_token: canExposeSensitive() ? apiToken : null });
+  const canExpose = canExposeSensitive();
+  return res.json({
+    api_token: canExpose ? apiToken : null,
+    api_token_preview: apiTokenPreview || null,
+    token_is_preview: !canExpose,
+  });
 };
 
 adminController.getCompanyToken = async (req, res) => {
@@ -1777,6 +1810,10 @@ adminController.getCompanyToken = async (req, res) => {
   }
   const adminCompanyId = getAdminCompanyId(req);
   const companyId = Number(req.params.id);
+  const wantsReveal = String(req.query?.reveal || "").toLowerCase() === "true" ||
+    String(req.query?.reveal || "") === "1";
+  const allowTokenReveal =
+    String(process.env.ADMIN_ALLOW_TOKEN_REVEAL || "").toLowerCase() === "true";
   if (!Number.isFinite(companyId)) {
     return res.status(400).json({ message: "Некорректный ID компании" });
   }
@@ -1784,13 +1821,36 @@ adminController.getCompanyToken = async (req, res) => {
     return res.status(403).json({ message: "Недостаточно прав" });
   }
   const company = await Company.findByPk(companyId, {
-    attributes: ["id", "api_token_last"],
+    attributes: ["id", "api_token_last", "api_token_enc"],
   });
   if (!company) {
     return res.status(404).json({ message: "Компания не найдена" });
   }
+  const apiTokenPreview = ensureTokenPreview(company.api_token_last);
+  if (wantsReveal) {
+    if (!allowTokenReveal || !canExposeSensitive()) {
+      return res.status(403).json({ message: "Розкриття токенів вимкнено" });
+    }
+    if (!company.api_token_enc) {
+      return res.status(409).json({
+        message: "Токен не збережено. Згенеруйте новий токен.",
+      });
+    }
+    try {
+      const decrypted = decryptToken(company.api_token_enc);
+      return res.json({
+        api_token: decrypted,
+        api_token_preview: apiTokenPreview || null,
+        token_is_preview: false,
+      });
+    } catch (err) {
+      return res.status(500).json({ message: "Не вдалося розшифрувати токен" });
+    }
+  }
   return res.json({
-    api_token: canExposeSensitive() ? company.api_token_last || null : null,
+    api_token: null,
+    api_token_preview: apiTokenPreview || null,
+    token_is_preview: true,
   });
 };
 
@@ -1799,6 +1859,10 @@ adminController.listCompanyTokens = async (req, res) => {
   if (!hasPermission(permissions, "token_generate")) {
     return res.status(403).json({ message: "Недостаточно прав" });
   }
+  const wantsReveal = String(req.query?.reveal || "").toLowerCase() === "true" ||
+    String(req.query?.reveal || "") === "1";
+  const allowTokenReveal =
+    String(process.env.ADMIN_ALLOW_TOKEN_REVEAL || "").toLowerCase() === "true";
   const adminCompanyId = getAdminCompanyId(req);
   const companyIds = await getCompanyScope(adminCompanyId, null);
   const where = {};
@@ -1810,7 +1874,7 @@ adminController.listCompanyTokens = async (req, res) => {
 
   const companies = await Company.findAll({
     where,
-    attributes: ["id", "name", "api_token_last"],
+    attributes: ["id", "name", "api_token_last", "api_token_enc"],
     order: [["id", "ASC"]],
   });
 
@@ -1818,7 +1882,22 @@ adminController.listCompanyTokens = async (req, res) => {
     items: companies.map((company) => ({
       id: company.id,
       name: company.name,
-      api_token: canExposeSensitive() ? company.api_token_last || null : null,
+      api_token: wantsReveal && allowTokenReveal && canExposeSensitive()
+        ? (() => {
+            try {
+              return company.api_token_enc ? decryptToken(company.api_token_enc) : null;
+            } catch (_) {
+              return null;
+            }
+          })()
+        : null,
+      api_token_preview: ensureTokenPreview(company.api_token_last) || null,
+      token_is_preview: !(
+        wantsReveal && allowTokenReveal && canExposeSensitive() && company.api_token_enc
+      ),
+      token_missing: wantsReveal && allowTokenReveal && canExposeSensitive() && !company.api_token_enc
+        ? true
+        : false,
     })),
   });
 };

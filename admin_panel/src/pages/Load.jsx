@@ -28,6 +28,13 @@ export default function Load() {
     paymentPageRps: 120,
     note: "тест 20с, CPU ≤85%",
   };
+  const loadTestNote = {
+    date: "2026-02-06",
+    path: "/api/payment/generate",
+    duration: "20с",
+    c10Fail: "≈64%",
+    c25Fail: "100%",
+  };
 
   const load = () => {
     api
@@ -82,6 +89,14 @@ export default function Load() {
             Генерація платежу • /payment ~{maxThroughput.paymentPageRps} RPS
           </div>
           <div className="muted-text">{maxThroughput.note}</div>
+        </div>
+        <div className="card">
+          <h3>Навантажувальний тест</h3>
+          <div className="value">{loadTestNote.path}</div>
+          <div className="muted-text">
+            {loadTestNote.date} • {loadTestNote.duration} • c=10: {loadTestNote.c10Fail} помилок
+          </div>
+          <div className="muted-text">c=25: {loadTestNote.c25Fail} помилок</div>
         </div>
         <div className="card">
           <h3>Помилки</h3>

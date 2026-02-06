@@ -166,7 +166,7 @@ export default function PaymentLinkGenerator() {
         subtitle="Надішліть клієнту посилання або QR та отримайте платіж"
       />
       <div className="section">
-        <form className="form-grid" onSubmit={handleSubmit}>
+        <form className="form-grid align-end" onSubmit={handleSubmit}>
           {company_id ? (
             <div className="field">
               ID компанії
@@ -183,11 +183,6 @@ export default function PaymentLinkGenerator() {
               />
             </label>
           )}
-          {!company_id ? (
-            <div className="form-hint">
-              Ви можете ввести ID компанії (у суперадмінів), щоб згенерувати посилання.
-            </div>
-          ) : null}
           <label className="field">
             Сума
             <input
@@ -200,14 +195,19 @@ export default function PaymentLinkGenerator() {
               onChange={(e) => setAmount(e.target.value)}
             />
           </label>
-          <label className="field" style={{ alignItems: "center" }}>
-            <input
-              type="checkbox"
-              checked={allowAmountEdit}
-              onChange={(e) => setAllowAmountEdit(e.target.checked)}
-            />
-            <span style={{ marginLeft: 10 }}>Редагується сума</span>
-          </label>
+          <div className="field checkbox toggle-field">
+            <button
+              type="button"
+              className={`button toggle-button ${allowAmountEdit ? "on" : "off"}`}
+              onClick={() => setAllowAmountEdit((prev) => !prev)}
+              aria-pressed={allowAmountEdit}
+            >
+              <span className="toggle-label">Редагування суми</span>
+              <span className="toggle-track" aria-hidden="true">
+                <span className="toggle-knob" />
+              </span>
+            </button>
+          </div>
           <label className="field">
             Призначення
             <input
